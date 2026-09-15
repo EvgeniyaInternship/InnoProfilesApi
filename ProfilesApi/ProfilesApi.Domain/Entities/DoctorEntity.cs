@@ -8,6 +8,5 @@
         public Guid OfficeId { get; set; }
         public Guid SpecializationId { get; set; }
         public Guid ServiceId { get; set; }
-
     }
 }
