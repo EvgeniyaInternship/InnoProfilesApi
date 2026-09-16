@@ -2,6 +2,6 @@
 
 public sealed class AdminEntity : PersonEntity
 {
-    public int WorkExperience { get; set; }
+    public DateTime WorkStartDate { get; set; }
     public Guid OfficeId { get; set; }
 }
