@@ -2,9 +2,9 @@
 
 public enum AccountRole
 {
-    Admin,
-    Receptionist,
-    Doctor,
-    Patient
+    Admin = 1,
+    Receptionist = 2,
+    Doctor = 3,
+    Patient = 4
 }
 
