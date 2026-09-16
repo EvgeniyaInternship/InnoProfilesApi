@@ -1,8 +1,8 @@
-﻿namespace ProfilesApi.Domain.Interfaces
+﻿namespace ProfilesApi.Domain.Interfaces;
+
+public interface ISoftDeletable
 {
-    public interface ISoftDeletable
-    {
-        bool IsDeleted { get; set; }
-        DateTime? DeletedOnUtc { get; set; }
-    }
+    bool IsDeleted { get; set; }
+    DateTime? DeletedOnUtc { get; set; }
 }
+

@@ -1,4 +1,5 @@
-﻿namespace ProfilesApi.Domain.Entities
+﻿namespace ProfilesApi.Domain.Entities;
+
+public sealed class PatientEntity : PersonEntity
 {
-    public class PatientEntity : PersonEntity { }
 }

@@ -1,9 +1,7 @@
-﻿namespace ProfilesApi.Domain.Entities
-{
-    public class ReceptionistEntity : PersonEntity
-    {
-        public int WorkExperience { get; set; }
+﻿namespace ProfilesApi.Domain.Entities;
 
-        public Guid OfficeId { get; set; }
-    }
+public sealed class ReceptionistEntity : PersonEntity
+{
+    public int WorkExperience { get; set; }
+    public Guid OfficeId { get; set; }
 }

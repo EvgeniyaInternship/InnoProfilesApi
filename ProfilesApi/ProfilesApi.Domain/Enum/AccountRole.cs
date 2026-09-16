@@ -1,10 +1,10 @@
-﻿namespace ProfilesApi.Domain.Enum
+﻿namespace ProfilesApi.Domain.Enum;
+
+public enum AccountRole
 {
-    public enum AccountRole
-    {
-        Admin,
-        Receptionist,
-        Doctor,
-        Patient
-    }
+    Admin,
+    Receptionist,
+    Doctor,
+    Patient
 }
+
