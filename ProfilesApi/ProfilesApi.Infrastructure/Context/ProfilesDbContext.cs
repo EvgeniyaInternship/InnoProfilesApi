@@ -7,7 +7,7 @@ using ProfilesApi.Infrastructure.Interceptors;
 
 namespace ProfilesApi.Infrastructure.Context;
 
-public class ProfilesDbContext(DbContextOptions<ProfilesDbContext> options, IConfiguration configuration) : DbContext(options)
+public class ProfilesDbContext(IConfiguration configuration) : DbContext()
 {
     public DbSet<AccountEntity> Accounts { get; set; }
     public DbSet<AdminEntity> Admins { get; set; }

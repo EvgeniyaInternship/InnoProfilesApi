@@ -5,26 +5,28 @@ using ProfilesApi.Infrastructure.Context;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
-public class GenericRepository<T>(ProfilesDbContext context) : IGenericRepository<T> where T : SoftDeletableEntity
+public abstract class GenericRepository<T> : IGenericRepository<T> where T : SoftDeletableEntity
 {
-    private readonly DbSet<T> _dbSet = context.Set<T>();
+    private readonly DbSet<T> _dbSet;
+
+    public GenericRepository(ProfilesDbContext context)
+    {
+        _dbSet = context.Set<T>();
+    }
 
     public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _dbSet.FindAsync([id], cancellationToken);
+        => await _dbSet.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default)
         => await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
 
-    public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
-        => await _dbSet.AddAsync(entity, cancellationToken);
+    public async Task Add(T entity)
+        => _dbSet.Add(entity);
 
     public void Update(T entity)
         => _dbSet.Update(entity);
 
     public void Delete(T entity)
-    {
-        entity.IsDeleted = true;
-        entity.DeletedOnUtc = DateTime.UtcNow;
-        _dbSet.Update(entity);
-    }
+        => _dbSet.Remove(entity);
+    
 }
