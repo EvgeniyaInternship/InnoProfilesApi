@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using ProfilesApi.Infrastructure.Context;
 
-namespace ProfilesApi.Infrastructure;
+namespace ProfilesApi.Infrastructure.Repositories;
 
 public class GenericRepository<T>(ProfilesDbContext context) : IGenericRepository<T> where T : SoftDeletableEntity
 {

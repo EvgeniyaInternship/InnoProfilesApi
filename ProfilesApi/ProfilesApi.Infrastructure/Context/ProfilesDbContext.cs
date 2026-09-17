@@ -2,9 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Infrastructure.Configurations;
+using ProfilesApi.Infrastructure.Data;
 using ProfilesApi.Infrastructure.Interceptors;
 
-namespace ProfilesApi.Infrastructure;
+namespace ProfilesApi.Infrastructure.Context;
 
 public class ProfilesDbContext(DbContextOptions<ProfilesDbContext> options, IConfiguration configuration) : DbContext(options)
 {
@@ -28,7 +29,7 @@ public class ProfilesDbContext(DbContextOptions<ProfilesDbContext> options, ICon
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder
-            .UseNpgsql(configuration.GetConnectionString("profiles-db"))
+            .UseNpgsql(configuration.GetConnectionString(ConnectionStringKeys.ProfilesDb))
             .AddInterceptors(new TimestampInterceptor(), new SoftDeleteInterceptor());
     }
 }
