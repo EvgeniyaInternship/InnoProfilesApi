@@ -1,6 +1,7 @@
 ﻿namespace ProfilesApi.Infrastructure.Data;
 
-public static class ConnectionStringKeys
+public class DatabaseOptions
 {
-    public const string ProfilesDb = "ProfilesDb";
+    public const string SectionName = "ConnectionStrings";
+    public string ProfilesDb { get; set; } = string.Empty;
 }
