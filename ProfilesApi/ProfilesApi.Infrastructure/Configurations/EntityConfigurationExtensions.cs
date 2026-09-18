@@ -22,10 +22,6 @@ public static class EntityConfigurationExtensions
     public static void ConfigureSoftDelete<T>(this EntityTypeBuilder<T> builder) where T : SoftDeletableEntity
     {
         builder.HasQueryFilter(x => !x.IsDeleted);
-
-        builder
-            .HasIndex(x => x.IsDeleted)
-            .HasFilter("\"IsDeleted\" = false");
     }
 
     public static void ConfigurePerson<T>(this EntityTypeBuilder<T> builder) where T : PersonEntity

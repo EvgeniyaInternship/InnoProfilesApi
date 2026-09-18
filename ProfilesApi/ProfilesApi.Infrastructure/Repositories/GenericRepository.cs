@@ -14,19 +14,21 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _dbSet.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public async Task<T?> GetByIdAsync(Guid id, bool isTracked = false, CancellationToken cancellationToken = default)
+        => await (isTracked ? _dbSet : _dbSet.AsNoTracking()).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<T>> GetAllAsync(bool isTracked = false, CancellationToken cancellationToken = default)
+        => await (isTracked ? _dbSet : _dbSet.AsNoTracking()).ToListAsync(cancellationToken);
 
     public async Task Add(T entity)
         => _dbSet.Add(entity);
 
     public void Update(T entity)
-        => _dbSet.Update(entity);
+    {
+        _dbSet.Update(entity);
+    }
 
-    public void Delete(T entity)
+    public void Remove(T entity)
         => _dbSet.Remove(entity);
     
 }
