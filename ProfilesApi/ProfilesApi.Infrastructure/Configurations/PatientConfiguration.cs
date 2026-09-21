@@ -13,6 +13,6 @@ public class PatientConfiguration : IEntityTypeConfiguration<PatientEntity>
         builder.ConfigurePerson();
 
         builder.Property(x => x.InsuranceNumber).IsRequired();
-        builder.HasIndex(x => x.InsuranceNumber);
+        builder.HasIndex(x => x.InsuranceNumber).IsUnique();
     }
 }

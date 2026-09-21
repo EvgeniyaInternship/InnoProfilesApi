@@ -1,14 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using ProfilesApi.Domain.Entities;
-using ProfilesApi.Infrastructure.Configurations;
 using ProfilesApi.Infrastructure.Data;
-using ProfilesApi.Infrastructure.Interceptors;
 
 namespace ProfilesApi.Infrastructure.Context;
 
-public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions) : DbContext()
+public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions, 
+                               IEnumerable<IInterceptor> interceptors) : DbContext()
 {
     public DbSet<AccountEntity> Accounts { get; set; }
     public DbSet<AdminEntity> Admins { get; set; }
@@ -18,11 +17,7 @@ public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions) : DbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new AccountConfiguration());
-        modelBuilder.ApplyConfiguration(new AdminConfiguration());
-        modelBuilder.ApplyConfiguration(new DoctorConfiguration());
-        modelBuilder.ApplyConfiguration(new PatientConfiguration());
-        modelBuilder.ApplyConfiguration(new ReceptionistConfiguration());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProfilesDbContext).Assembly);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -31,7 +26,7 @@ public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions) : DbContext(
     {
         optionsBuilder
             .UseNpgsql(dbOptions.Value.ProfilesDb)
-            .AddInterceptors(new TimestampInterceptor(), new SoftDeleteInterceptor());
+            .AddInterceptors(interceptors);
     }
 }
 

@@ -13,7 +13,6 @@ public class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
         builder.ConfigurePerson();
 
         builder.Property(x => x.SpecializationId).IsRequired();
-        builder.HasIndex(x => x.SpecializationId);
 
         builder.Property(x => x.OfficeId).IsRequired();
         builder.HasIndex(x => x.OfficeId);
