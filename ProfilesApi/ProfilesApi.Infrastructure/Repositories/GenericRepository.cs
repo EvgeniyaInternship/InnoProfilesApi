@@ -15,10 +15,12 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     }
 
     public async Task<T?> GetByIdAsync(Guid id, bool isTracked = false, CancellationToken cancellationToken = default)
-        => await (isTracked ? _dbSet : _dbSet.AsNoTracking()).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
+           .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<T>> GetAllAsync(bool isTracked = false, CancellationToken cancellationToken = default)
-        => await (isTracked ? _dbSet : _dbSet.AsNoTracking()).ToListAsync(cancellationToken);
+        => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
+           .ToListAsync(cancellationToken);
 
     public async Task Add(T entity)
         => _dbSet.Add(entity);
