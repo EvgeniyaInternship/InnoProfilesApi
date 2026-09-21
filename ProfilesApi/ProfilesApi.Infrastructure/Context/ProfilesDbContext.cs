@@ -9,11 +9,11 @@ namespace ProfilesApi.Infrastructure.Context;
 public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions, 
                                IEnumerable<IInterceptor> interceptors) : DbContext()
 {
-    public DbSet<AccountEntity> Accounts { get; set; }
-    public DbSet<AdminEntity> Admins { get; set; }
-    public DbSet<DoctorEntity> Doctors { get; set; }
-    public DbSet<PatientEntity> Patients { get; set; }
-    public DbSet<ReceptionistEntity> Receptionists { get; set; }
+    public DbSet<AccountEntity> Accounts { get; init; }
+    public DbSet<AdminEntity> Admins { get; init; }
+    public DbSet<DoctorEntity> Doctors { get; init; }
+    public DbSet<PatientEntity> Patients { get; init; }
+    public DbSet<ReceptionistEntity> Receptionists { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
