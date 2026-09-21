@@ -25,13 +25,12 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     public void Add(T entity)
         => _dbSet.Add(entity);
 
-    public async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
-        => await _dbSet.AddRangeAsync(entities, cancellationToken);
+    public void AddRange(IEnumerable<T> entities)
+        => _dbSet.AddRange(entities);
 
     public void Update(T entity)
-    {
-        _dbSet.Update(entity);
-    }
+        => _dbSet.Update(entity);
+    
 
     public void UpdateRange(IEnumerable<T> entities)
         => _dbSet.UpdateRange(entities);
