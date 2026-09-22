@@ -33,57 +33,20 @@ public class UnitOfWork : IUnitOfWork
         Receptionists = receptionists;
     }
 
+    public int SaveChanges()
+    {
+        return _context.SaveChanges();
+    }
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
+    public async Task<IDbContextTransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+        CancellationToken cancellationToken = default)
     {
-        if (_currentTransaction is not null)
-        {
-            return;
-        }
-
-        _currentTransaction = await _context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
-    }
-
-    public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await SaveChangesAsync(cancellationToken);
-
-            if (_currentTransaction is not null)
-            {
-                await _currentTransaction.CommitAsync(cancellationToken);
-            }
-        }
-        catch
-        {
-            await RollbackTransactionAsync(cancellationToken);
-            throw;
-        }
-        finally
-        {
-            _currentTransaction?.Dispose();
-            _currentTransaction = null;
-        }
-    }
-
-    public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            if (_currentTransaction is not null)
-            {
-                await _currentTransaction.RollbackAsync(cancellationToken);
-            }
-        }
-        finally
-        {
-            _currentTransaction?.Dispose();
-            _currentTransaction = null;
-        }
+        return await _context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 
 namespace ProfilesApi.Infrastructure.Interfaces;
 
@@ -10,9 +11,10 @@ public interface IUnitOfWork
     IReceptionistRepository Receptionists { get; }
     IAdminRepository Admins { get; }
 
+    int SaveChanges();
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
-    Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default);
-    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
-    Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+    Task<IDbContextTransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+        CancellationToken cancellationToken = default);
 }
