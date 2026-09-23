@@ -9,7 +9,6 @@ namespace ProfilesApi.Infrastructure.Repositories;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly ProfilesDbContext _context;
-    private IDbContextTransaction? _currentTransaction;
 
     public IAccountRepository Accounts { get; }
     public IDoctorRepository Doctors { get; }
