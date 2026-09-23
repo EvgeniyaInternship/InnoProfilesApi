@@ -68,7 +68,7 @@ jobs:
 
       - name: Build .NET Project
         run: |
-          dotnet build ProfilesApi.sln --configuration Release
+          dotnet build ProfilesApi/ProfilesApi.sln --configuration Release
 
       - name: SonarQube End
         env:
