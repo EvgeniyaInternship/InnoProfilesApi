@@ -24,6 +24,8 @@ jobs:
             Expand-Archive -Path "C:\tools\gitleaks.zip" -DestinationPath "C:\tools" -Force
             Remove-Item "C:\tools\gitleaks.zip"
           }
+          git config --global --add safe.directory "*"
+          
           C:\tools\gitleaks.exe detect --source="." --verbose --redact
         shell: powershell
 
