@@ -70,21 +70,15 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          dotnet-sonarscanner begin \
-            /k:"ProfilesApi" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+        run: dotnet sonarscanner begin /k:"ProfilesApi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
 
       - name: Build .NET Project
-        run: |
-          dotnet build ProfilesApi/ProfilesApi.slnx --configuration Release
+        run: dotnet build ProfilesApi/ProfilesApi.slnx --configuration Release
 
       - name: SonarQube End
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
