@@ -9,7 +9,7 @@ on:
 jobs:
   gitleaks:
     name: Gitleaks (Secret Detection)
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
 
   security-and-quality:
     name: CodeQL & SonarQube Analysis
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     permissions:
       security-events: write
       actions: read
