@@ -1,7 +1,7 @@
-﻿namespace ProfilesApi.Application.DTOs.Requests.Create;
+﻿namespace ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
-public sealed record CreateDoctorDto(
-    Guid AccountId,
+public sealed record UpdateDoctorDto(
+    Guid Id,
     DateTime BirthDate,
     string FirstName,
     string LastName,

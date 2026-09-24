@@ -1,4 +1,4 @@
-﻿namespace ProfilesApi.Application.DTOs.Requests.Update;
+﻿namespace ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
 public sealed record UpdatePatientDto(
     Guid Id,

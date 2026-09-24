@@ -1,4 +1,4 @@
-﻿namespace ProfilesApi.Application.DTOs.Requests.Create;
+﻿namespace ProfilesApi.Application.DTOs.Requests.CreateRequests;
 
 public sealed record CreateAdminDto(
     Guid AccountId,
