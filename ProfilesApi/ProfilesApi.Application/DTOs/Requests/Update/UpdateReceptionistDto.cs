@@ -1,6 +1,7 @@
 ﻿namespace ProfilesApi.Application.DTOs.Requests.Update;
 
 public sealed record UpdateReceptionistDto(
+    Guid Id,
     DateTime BirthDate,
     string FirstName,
     string LastName,

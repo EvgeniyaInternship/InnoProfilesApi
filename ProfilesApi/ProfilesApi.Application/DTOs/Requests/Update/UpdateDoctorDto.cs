@@ -1,6 +1,7 @@
 ﻿namespace ProfilesApi.Application.DTOs.Requests.Update;
 
-public record UpdateDoctorDto(
+public sealed record UpdateDoctorDto(
+    Guid Id,
     DateTime BirthDate,
     string FirstName,
     string LastName,

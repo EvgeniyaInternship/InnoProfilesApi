@@ -1,6 +1,6 @@
 ﻿namespace ProfilesApi.Application.DTOs.Requests.Create;
 
-public sealed record UpdateReceptionistDto(
+public sealed record CreateReceptionistDto(
     Guid AccountId,
     DateTime BirthDate,
     string FirstName,
