@@ -36,10 +36,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup .NET SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '10.0.x' 
+          dotnet-version: '10.0.x'
+          global-json-file: '' 
+        env:
+          DOTNET_INSTALL_DIR: 'C:\actions-runner\_work\_tool\dotnet'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
