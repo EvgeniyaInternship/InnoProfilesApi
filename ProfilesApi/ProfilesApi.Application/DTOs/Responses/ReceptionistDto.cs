@@ -1,8 +1,6 @@
-﻿using ProfilesApi.Application.DTOs.Abstract;
+﻿namespace ProfilesApi.Application.DTOs.Responses;
 
-namespace ProfilesApi.Application.DTOs.Responses;
-
-public record ReceptionistDto(
+public sealed record ReceptionistDto(
     Guid Id,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -14,4 +12,4 @@ public record ReceptionistDto(
     string? MiddleName,
     DateTime WorkStartDate,
     Guid OfficeId
-) : PersonDto(Id, CreatedAt, UpdatedAt, IsDeleted, AccountId, BirthDate, FirstName, LastName, MiddleName);
+);

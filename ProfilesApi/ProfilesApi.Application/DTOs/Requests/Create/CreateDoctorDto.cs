@@ -1,11 +1,12 @@
-﻿namespace ProfilesApi.Application.DTOs.Requests;
+﻿namespace ProfilesApi.Application.DTOs.Requests.Create;
 
-public record CreateAdminDto(
+public sealed record CreateDoctorDto(
     Guid AccountId,
     DateTime BirthDate,
     string FirstName,
     string LastName,
     string? MiddleName,
     DateTime WorkStartDate,
-    Guid OfficeId
+    Guid OfficeId,
+    Guid SpecializationId
 );

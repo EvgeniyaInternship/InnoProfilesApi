@@ -1,8 +1,6 @@
-﻿using ProfilesApi.Application.DTOs.Abstract;
+﻿namespace ProfilesApi.Application.DTOs.Responses;
 
-namespace ProfilesApi.Application.DTOs.Responses;
-
-public record PatientDto(
+public sealed record PatientDto(
     Guid Id,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -13,4 +11,4 @@ public record PatientDto(
     string LastName,
     string? MiddleName,
     string InsuranceNumber
-) : PersonDto(Id, CreatedAt, UpdatedAt, IsDeleted, AccountId, BirthDate, FirstName, LastName, MiddleName);
+);

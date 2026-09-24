@@ -1,8 +1,6 @@
-﻿using ProfilesApi.Application.DTOs.Abstract;
+﻿namespace ProfilesApi.Application.DTOs.Responses;
 
-namespace ProfilesApi.Application.DTOs.Responses;
-
-public record DoctorDto(
+public sealed record DoctorDto(
     Guid Id,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -15,4 +13,4 @@ public record DoctorDto(
     DateTime WorkStartDate,
     Guid OfficeId,
     Guid SpecializationId
-) : PersonDto(Id, CreatedAt, UpdatedAt, IsDeleted, AccountId, BirthDate, FirstName, LastName, MiddleName);
+);
