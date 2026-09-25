@@ -15,8 +15,6 @@ public class ReceptionistDtoValidator : AbstractValidator<ReceptionistDto>
         RuleFor(x => x.UpdatedAt)
             .NotEmpty()
             .LessThan(DateTime.Now);
-        RuleFor(x => x.IsDeleted)
-            .NotEmpty();
         RuleFor(x => x.AccountId)
             .NotEmpty();
         RuleFor(x => x.BirthDate)
