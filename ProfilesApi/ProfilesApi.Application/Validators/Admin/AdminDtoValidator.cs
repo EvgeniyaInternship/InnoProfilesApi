@@ -3,9 +3,9 @@ using ProfilesApi.Application.DTOs.Responses;
 
 namespace ProfilesApi.Application.Validators.Admin;
 
-public class DoctorDtoValidator : AbstractValidator<AdminDto>
+public class AdminDtoValidator : AbstractValidator<AdminDto>
 {
-    public DoctorDtoValidator()
+    public AdminDtoValidator()
     {
         RuleFor(x => x.Id)
             .NotEmpty();

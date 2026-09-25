@@ -3,9 +3,9 @@ using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 
 namespace ProfilesApi.Application.Validators.Doctor;
 
-public class CreatePatientDtoValidator : AbstractValidator<CreateDoctorDto>
+public class CreateDoctorDtoValidator : AbstractValidator<CreateDoctorDto>
 {
-    public CreatePatientDtoValidator()
+    public CreateDoctorDtoValidator()
     {
         RuleFor(x => x.AccountId)
             .NotEmpty();

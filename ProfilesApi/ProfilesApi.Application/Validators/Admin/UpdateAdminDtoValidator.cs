@@ -3,9 +3,9 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
 namespace ProfilesApi.Application.Validators.Admin;
 
-public class UpdateDoctorDtoValidator : AbstractValidator<UpdateAdminDto>
+public class UpdateAdminDtoValidator : AbstractValidator<UpdateAdminDto>
 {
-    public UpdateDoctorDtoValidator()
+    public UpdateAdminDtoValidator()
     {
         RuleFor(x => x.Id)
             .NotEmpty();
