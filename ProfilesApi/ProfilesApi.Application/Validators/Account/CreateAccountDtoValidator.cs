@@ -19,7 +19,7 @@ public sealed class CreateAccountDtoValidator : AbstractValidator<CreateAccountD
             .MaximumLength(150)
             .WithMessage("Email cannot exceed 150 characters.");
 
-        RuleFor(x => x.Password)
+        RuleFor(x => x.PasswordHash)
             .NotEmpty()
             .MinimumLength(8)
             .WithMessage("Password must be at least 8 characters long.");
