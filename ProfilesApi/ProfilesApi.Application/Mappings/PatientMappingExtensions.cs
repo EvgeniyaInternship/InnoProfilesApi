@@ -27,15 +27,12 @@ public static class PatientMappingExtensions
     {
         return new PatientEntity
         {
-            Id = Guid.NewGuid(),
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             MiddleName = dto.MiddleName,
             InsuranceNumber = dto.InsuranceNumber,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
         };
     }
 
@@ -46,11 +43,5 @@ public static class PatientMappingExtensions
         entity.LastName = dto.LastName;
         entity.MiddleName = dto.MiddleName;
         entity.InsuranceNumber = dto.InsuranceNumber;
-        entity.UpdatedAt = DateTime.UtcNow; 
-    }
-
-    public static IEnumerable<PatientDto> ToDtos(this IEnumerable<PatientEntity> entities)
-    {
-        return entities?.Select(e => e.ToDto()) ?? [];
     }
 }

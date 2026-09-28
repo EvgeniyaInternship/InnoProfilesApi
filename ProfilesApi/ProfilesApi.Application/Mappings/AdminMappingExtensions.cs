@@ -28,7 +28,6 @@ public static class AdminMappingExtensions
     {
         return new AdminEntity
         {
-            Id = Guid.NewGuid(),
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
             FirstName = dto.FirstName,
@@ -36,8 +35,6 @@ public static class AdminMappingExtensions
             MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
         };
     }
 
@@ -48,11 +45,5 @@ public static class AdminMappingExtensions
         entity.LastName = dto.LastName;
         entity.MiddleName = dto.MiddleName;
         entity.WorkStartDate = dto.WorkStartDate;
-        entity.UpdatedAt = DateTime.UtcNow;
-    }
-
-    public static IEnumerable<AdminDto> ToDtos(this IEnumerable<AdminEntity> entities)
-    {
-        return entities?.Select(e => e.ToDto()) ?? [];
     }
 }

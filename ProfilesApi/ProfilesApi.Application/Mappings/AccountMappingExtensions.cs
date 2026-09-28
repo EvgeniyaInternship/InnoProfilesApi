@@ -24,13 +24,10 @@ public static class AccountMappingExtensions
     {
         return new AccountEntity
         {
-            Id = Guid.NewGuid(),
             PhoneNumber = dto.PhoneNumber,
             Email = dto.Email,
             Role = dto.Role,
             PhotoId = dto.PhotoId,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
         };
     }
 
@@ -40,11 +37,5 @@ public static class AccountMappingExtensions
         entity.Email = dto.Email;
         entity.Role = dto.Role;
         entity.PhotoId = dto.PhotoId;
-        entity.UpdatedAt = DateTime.UtcNow;
-    }
-
-    public static IEnumerable<AccountDto> ToDtos(this IEnumerable<AccountEntity> entities)
-    {
-        return entities?.Select(e => e.ToDto()) ?? [];
     }
 }

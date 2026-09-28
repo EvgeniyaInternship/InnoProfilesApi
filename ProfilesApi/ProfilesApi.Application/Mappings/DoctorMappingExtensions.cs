@@ -29,7 +29,6 @@ public static class DoctorMappingExtensions
     {
         return new DoctorEntity
         {
-            Id = Guid.NewGuid(),
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
             FirstName = dto.FirstName,
@@ -38,8 +37,6 @@ public static class DoctorMappingExtensions
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
             SpecializationId = dto.SpecializationId,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
         };
     }
 
@@ -52,11 +49,5 @@ public static class DoctorMappingExtensions
         entity.WorkStartDate = dto.WorkStartDate;
         entity.OfficeId = dto.OfficeId;
         entity.SpecializationId = dto.SpecializationId;
-        entity.UpdatedAt = DateTime.UtcNow;
-    }
-
-    public static IEnumerable<DoctorDto> ToDtos(this IEnumerable<DoctorEntity> entities)
-    {
-        return entities?.Select(e => e.ToDto()) ?? [];
     }
 }

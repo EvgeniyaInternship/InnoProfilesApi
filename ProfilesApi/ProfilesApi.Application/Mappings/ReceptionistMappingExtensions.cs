@@ -28,7 +28,6 @@ public static class ReceptionistMappingExtensions
     {
         return new ReceptionistEntity
         {
-            Id = Guid.NewGuid(),
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
             FirstName = dto.FirstName,
@@ -36,8 +35,6 @@ public static class ReceptionistMappingExtensions
             MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
         };
     }
 
@@ -49,11 +46,5 @@ public static class ReceptionistMappingExtensions
         entity.MiddleName = dto.MiddleName;
         entity.WorkStartDate = dto.WorkStartDate;
         entity.OfficeId = dto.OfficeId;
-        entity.UpdatedAt = DateTime.UtcNow;
-    }
-
-    public static IEnumerable<ReceptionistDto> ToDtos(this IEnumerable<ReceptionistEntity> entities)
-    {
-        return entities?.Select(e => e.ToDto()) ?? [];
     }
 }
