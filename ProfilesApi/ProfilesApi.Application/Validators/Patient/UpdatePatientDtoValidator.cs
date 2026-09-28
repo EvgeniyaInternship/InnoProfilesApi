@@ -11,7 +11,7 @@ public class UpdatePatientDtoValidator : AbstractValidator<UpdatePatientDto>
             .NotEmpty();
         RuleFor(x => x.BirthDate)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.FirstName)
             .NotEmpty()
             .MaximumLength(50)

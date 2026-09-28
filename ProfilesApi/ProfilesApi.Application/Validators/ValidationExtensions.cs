@@ -13,4 +13,13 @@ public static class ValidationExtensions
             .Matches(ValidationConstants.NationalInsuranceNumberRegex)
             .WithMessage("Invalid National Insurance Number format.");
     }
+
+    public static IRuleBuilderOptions<T, string> ValidPhoneNumber<T>(this IRuleBuilder<T, string> ruleBuilder)
+    {
+        return ruleBuilder
+            .NotEmpty()
+            .WithMessage("Phone number is required.")
+            .Matches(ValidationConstants.PhoneNumberRegex)
+            .WithMessage("Invalid phone number format.");
+    }
 }

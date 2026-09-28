@@ -11,15 +11,15 @@ public class PatientDtoValidator : AbstractValidator<PatientDto>
             .NotEmpty();
         RuleFor(x => x.CreatedAt)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.UpdatedAt)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.AccountId)
             .NotEmpty();
         RuleFor(x => x.BirthDate)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.FirstName)
             .NotEmpty()
             .MaximumLength(50)

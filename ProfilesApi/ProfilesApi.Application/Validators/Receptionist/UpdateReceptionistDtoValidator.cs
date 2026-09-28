@@ -11,7 +11,7 @@ public class UpdateReceptionistDtoValidator : AbstractValidator<UpdateReceptioni
             .NotEmpty();
         RuleFor(x => x.BirthDate)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.FirstName)
             .NotEmpty()
             .MaximumLength(50)
@@ -25,7 +25,7 @@ public class UpdateReceptionistDtoValidator : AbstractValidator<UpdateReceptioni
             .WithMessage("Middle name cannot exceed 50 characters.");
         RuleFor(x => x.WorkStartDate)
             .NotEmpty()
-            .LessThan(DateTime.Now)
+            .LessThan(DateTime.UtcNow)
             .WithMessage("Work start date must be in the past.");
         RuleFor(x => x.OfficeId)
             .NotEmpty();

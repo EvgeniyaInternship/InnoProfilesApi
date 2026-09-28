@@ -11,15 +11,15 @@ public class ReceptionistDtoValidator : AbstractValidator<ReceptionistDto>
             .NotEmpty();
         RuleFor(x => x.CreatedAt)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.UpdatedAt)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.AccountId)
             .NotEmpty();
         RuleFor(x => x.BirthDate)
             .NotEmpty()
-            .LessThan(DateTime.Now);
+            .LessThan(DateTime.UtcNow);
         RuleFor(x => x.FirstName)
             .NotEmpty()
             .MaximumLength(50)
@@ -33,7 +33,7 @@ public class ReceptionistDtoValidator : AbstractValidator<ReceptionistDto>
             .WithMessage("Middle name cannot exceed 50 characters.");
         RuleFor(x => x.WorkStartDate)
             .NotEmpty()
-            .LessThan(DateTime.Now)
+            .LessThan(DateTime.UtcNow)
             .WithMessage("Work start date must be in the past.");
         RuleFor(x => x.OfficeId)
             .NotEmpty();
