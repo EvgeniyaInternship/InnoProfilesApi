@@ -2,7 +2,7 @@
 
 namespace ProfilesApi.Application.DTOs.Requests.CreateRequests;
 
-public record CreateAccountDto(
+public sealed record CreateAccountDto(
     string PhoneNumber,
     string Email,
     string PasswordHash,

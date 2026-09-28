@@ -2,7 +2,7 @@
 
 namespace ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
-public record UpdateAccountDto(
+public sealed record UpdateAccountDto(
     Guid Id,
     string PhoneNumber,
     string Email,
