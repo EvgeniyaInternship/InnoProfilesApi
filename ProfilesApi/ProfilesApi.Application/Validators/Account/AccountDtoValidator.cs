@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Responses;
 
 namespace ProfilesApi.Application.Validators.Account;
 
-public class AccountDtoValidator : AbstractValidator<AccountDto>
+public sealed class AccountDtoValidator : AbstractValidator<AccountDto>
 {
     public AccountDtoValidator()
     {

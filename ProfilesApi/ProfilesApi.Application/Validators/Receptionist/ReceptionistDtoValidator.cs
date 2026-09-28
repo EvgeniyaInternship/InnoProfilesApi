@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Responses;
 
 namespace ProfilesApi.Application.Validators.Receptionist;
 
-public class ReceptionistDtoValidator : AbstractValidator<ReceptionistDto>
+public sealed class ReceptionistDtoValidator : AbstractValidator<ReceptionistDto>
 {
     public ReceptionistDtoValidator()
     {

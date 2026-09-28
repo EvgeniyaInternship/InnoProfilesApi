@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Responses;
 
 namespace ProfilesApi.Application.Validators.Patient;
 
-public class PatientDtoValidator : AbstractValidator<PatientDto>
+public sealed class PatientDtoValidator : AbstractValidator<PatientDto>
 {
     public PatientDtoValidator()
     {

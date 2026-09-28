@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
 namespace ProfilesApi.Application.Validators.Account;
 
-public class UpdateAccountDtoValidator : AbstractValidator<UpdateAccountDto>
+public sealed class UpdateAccountDtoValidator : AbstractValidator<UpdateAccountDto>
 {
     public UpdateAccountDtoValidator()
     {

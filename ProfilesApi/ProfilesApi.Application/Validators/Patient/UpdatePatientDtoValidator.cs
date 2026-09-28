@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
 namespace ProfilesApi.Application.Validators.Patient;
 
-public class UpdatePatientDtoValidator : AbstractValidator<UpdatePatientDto>
+public sealed class UpdatePatientDtoValidator : AbstractValidator<UpdatePatientDto>
 {
     public UpdatePatientDtoValidator()
     {

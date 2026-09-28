@@ -2,7 +2,7 @@
 
 namespace ProfilesApi.Application.DTOs.Responses;
 
-public record AccountDto(
+public sealed record AccountDto(
     Guid Id,
     string PhoneNumber,
     string Email,

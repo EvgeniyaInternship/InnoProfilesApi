@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 
 namespace ProfilesApi.Application.Validators.Receptionist;
 
-public class UpdateReceptionistDtoValidator : AbstractValidator<UpdateReceptionistDto>
+public sealed class UpdateReceptionistDtoValidator : AbstractValidator<UpdateReceptionistDto>
 {
     public UpdateReceptionistDtoValidator()
     {

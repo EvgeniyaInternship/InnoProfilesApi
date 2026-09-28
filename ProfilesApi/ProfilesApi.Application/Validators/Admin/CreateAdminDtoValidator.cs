@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 
 namespace ProfilesApi.Application.Validators.Admin;
 
-public class CreateAdminDtoValidator : AbstractValidator<CreateAdminDto>
+public sealed class CreateAdminDtoValidator : AbstractValidator<CreateAdminDto>
 {
     public CreateAdminDtoValidator()
     {

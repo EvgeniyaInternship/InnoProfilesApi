@@ -3,7 +3,7 @@ using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 
 namespace ProfilesApi.Application.Validators.Patient;
 
-public class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
+public sealed class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
 {
     public CreatePatientDtoValidator()
     {
