@@ -40,14 +40,18 @@ public static class DoctorMappingExtensions
         };
     }
 
-    public static void UpdateEntity(this UpdateDoctorDto dto, DoctorEntity entity)
+    public static DoctorEntity UpdateEntity(this UpdateDoctorDto dto)
     {
-        entity.BirthDate = dto.BirthDate;
-        entity.FirstName = dto.FirstName;
-        entity.LastName = dto.LastName;
-        entity.MiddleName = dto.MiddleName;
-        entity.WorkStartDate = dto.WorkStartDate;
-        entity.OfficeId = dto.OfficeId;
-        entity.SpecializationId = dto.SpecializationId;
+        return new DoctorEntity
+        {
+            Id = dto.Id,
+            BirthDate = dto.BirthDate,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
+            WorkStartDate = dto.WorkStartDate,
+            OfficeId = dto.OfficeId,
+            SpecializationId = dto.SpecializationId
+        };          
     }
 }
