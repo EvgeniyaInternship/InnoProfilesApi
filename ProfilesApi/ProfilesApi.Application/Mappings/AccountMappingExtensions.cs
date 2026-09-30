@@ -31,11 +31,15 @@ public static class AccountMappingExtensions
         };
     }
 
-    public static void UpdateEntity(this UpdateAccountDto dto, AccountEntity entity)
+    public static AccountEntity UpdateEntity(this UpdateAccountDto dto)
     {
-        entity.PhoneNumber = dto.PhoneNumber;
-        entity.Email = dto.Email;
-        entity.Role = dto.Role;
-        entity.PhotoId = dto.PhotoId;
+        return new AccountEntity
+        {
+            Id = dto.Id,
+            PhoneNumber = dto.PhoneNumber,
+            Email = dto.Email,
+            Role = dto.Role,
+            PhotoId = dto.PhotoId,
+        };
     }
 }
