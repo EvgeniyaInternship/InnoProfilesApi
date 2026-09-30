@@ -46,7 +46,7 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task RemoveDoctorAsync(Guid id, CancellationToken ct = default)
     {
-        var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == id, cancellationToken: ct);
+        var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == id, true, cancellationToken: ct);
         if (doctor is null)
             throw new KeyNotFoundException($"Doctor with ID {id} was not found.");
 
@@ -56,10 +56,9 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task<IEnumerable<DoctorDto>> CreateRangeAsync(IEnumerable<CreateDoctorDto> dtos, CancellationToken ct = default)
     {
-        var dtoList = dtos.ToList();
-        if (dtoList.Count == 0) return [];
+        if (!dtos.Any()) return [];
 
-        var entities = dtoList.Select(dto => dto.ToEntity()).ToList();
+        var entities = dtos.Select(dto => dto.ToEntity()).ToList();
 
         unitOfWork.Doctors.AddRange(entities);
         await unitOfWork.SaveChangesAsync(ct);
@@ -69,8 +68,8 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateDoctorDto> dtos, CancellationToken ct = default)
     {
+        if (!dtos.Any()) return;
         var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
-        if (entities.Count == 0) return;
 
         unitOfWork.Doctors.UpdateRange(entities);
         await unitOfWork.SaveChangesAsync(ct);

@@ -46,7 +46,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task RemoveReceptionistAsync(Guid id, CancellationToken ct = default)
     {
-        var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, cancellationToken: ct);
+        var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, true, cancellationToken: ct);
         if (receptionist is null)
             throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
 
@@ -56,10 +56,9 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task<IEnumerable<ReceptionistDto>> CreateRangeAsync(IEnumerable<CreateReceptionistDto> dtos, CancellationToken ct = default)
     {
-        var dtoList = dtos.ToList();
-        if (dtoList.Count == 0) return [];
+        if (!dtos.Any()) return [];
 
-        var entities = dtoList.Select(dto => dto.ToEntity()).ToList();
+        var entities = dtos.Select(dto => dto.ToEntity()).ToList();
 
         unitOfWork.Receptionists.AddRange(entities);
         await unitOfWork.SaveChangesAsync(ct);
@@ -69,8 +68,8 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default)
     {
+        if (!dtos.Any()) return;
         var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
-        if (entities.Count == 0) return;
 
         unitOfWork.Receptionists.UpdateRange(entities);
         await unitOfWork.SaveChangesAsync(ct);

@@ -46,7 +46,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task RemovePatientAsync(Guid id, CancellationToken ct = default)
     {
-        var patient = await unitOfWork.Patients.GetAsync(x => x.Id == id, cancellationToken: ct);
+        var patient = await unitOfWork.Patients.GetAsync(x => x.Id == id, true, cancellationToken: ct);
         if (patient is null)
             throw new KeyNotFoundException($"Patient with ID {id} was not found.");
 
@@ -56,10 +56,9 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task<IEnumerable<PatientDto>> CreateRangeAsync(IEnumerable<CreatePatientDto> dtos, CancellationToken ct = default)
     {
-        var dtoList = dtos.ToList();
-        if (dtoList.Count == 0) return [];
+        if (!dtos.Any()) return [];
 
-        var entities = dtoList.Select(dto => dto.ToEntity()).ToList();
+        var entities = dtos.Select(dto => dto.ToEntity()).ToList();
 
         unitOfWork.Patients.AddRange(entities);
         await unitOfWork.SaveChangesAsync(ct);
@@ -69,8 +68,8 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
+        if (!dtos.Any()) return;
         var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
-        if (entities.Count == 0) return;
 
         unitOfWork.Patients.UpdateRange(entities);
         await unitOfWork.SaveChangesAsync(ct);

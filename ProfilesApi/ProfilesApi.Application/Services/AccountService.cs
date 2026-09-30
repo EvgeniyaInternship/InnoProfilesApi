@@ -50,7 +50,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task RemoveAccountAsync(Guid id, CancellationToken ct = default)
     {
-        var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, cancellationToken: ct); 
+        var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, true, cancellationToken: ct); 
         if (account is null)
             throw new KeyNotFoundException($"Account with ID {id} was not found.");
 
@@ -60,10 +60,9 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task<IEnumerable<AccountDto>> CreateRangeAsync(IEnumerable<CreateAccountDto> dtos, CancellationToken ct = default)
     {
-        var dtoList = dtos.ToList();
-        if (dtoList.Count == 0) return [];
+        if (!dtos.Any()) return [];
 
-        var entities = dtoList.Select(dto => dto.ToEntity()).ToList(); 
+        var entities = dtos.Select(dto => dto.ToEntity()).ToList(); 
 
         unitOfWork.Accounts.AddRange(entities); 
         await unitOfWork.SaveChangesAsync(ct); 
@@ -73,8 +72,8 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
+        if (!dtos.Any()) return;
         var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
-        if (entities.Count == 0) return;
 
         unitOfWork.Accounts.UpdateRange(entities);
 
