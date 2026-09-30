@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
+using ProfilesApi.Domain.Interfaces;
 using System.Data;
 
 namespace ProfilesApi.Infrastructure.Interfaces;
