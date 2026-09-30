@@ -9,11 +9,11 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ProfilesApi.Domain\ProfilesApi.Domain.csproj" />
-    <ProjectReference Include="..\ProfilesApi.Infrastructure\ProfilesApi.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

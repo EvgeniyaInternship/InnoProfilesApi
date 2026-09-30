@@ -7,7 +7,7 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IPatientService
 {
     Task<PatientDto> GetPatientByIdAsync(Guid id, CancellationToken ct = default);
-    Task<IEnumerable<PatientDto>> GetAllPatientsAsync(CancellationToken ct = default);
+    Task<IEnumerable<PatientDto>> GetAllPatientsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
     Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default);
     Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default);
     Task RemovePatientAsync(Guid id, CancellationToken ct = default);

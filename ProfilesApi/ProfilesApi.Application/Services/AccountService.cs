@@ -4,7 +4,6 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
-using ProfilesApi.Infrastructure.Interfaces;
 
 namespace ProfilesApi.Application.Services;
 
@@ -19,9 +18,9 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         return account.ToDto(); 
     }
 
-    public async Task<IEnumerable<AccountDto>> GetAllAccountsAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<AccountDto>> GetAllAccountsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var accounts = await unitOfWork.Accounts.GetAllAsync(cancellationToken: ct);
+        var accounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
         return accounts.Select(account => account.ToDto()); 
     }
 

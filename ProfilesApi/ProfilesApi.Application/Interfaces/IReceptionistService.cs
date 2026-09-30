@@ -7,7 +7,7 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IReceptionistService
 {
     Task<ReceptionistDto> GetReceptionistByIdAsync(Guid id, CancellationToken ct = default);
-    Task<IEnumerable<ReceptionistDto>> GetAllReceptionistsAsync(CancellationToken ct = default);
+    Task<IEnumerable<ReceptionistDto>> GetAllReceptionistsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
     Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default);
     Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default);
     Task RemoveReceptionistAsync(Guid id, CancellationToken ct = default);

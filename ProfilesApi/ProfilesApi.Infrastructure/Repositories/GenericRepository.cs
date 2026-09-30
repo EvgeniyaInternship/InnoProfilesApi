@@ -19,8 +19,9 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
            .FirstOrDefaultAsync(predicate, cancellationToken);
 
-    public async Task<IEnumerable<T>> GetAllAsync(bool isTracked = false, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default)
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
+           .Where(predicate)
            .ToListAsync(cancellationToken);
 
     public void Add(T entity)
@@ -32,7 +33,6 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     public void Update(T entity)
         => _dbSet.Update(entity);
     
-
     public void UpdateRange(IEnumerable<T> entities)
         => _dbSet.UpdateRange(entities);
 

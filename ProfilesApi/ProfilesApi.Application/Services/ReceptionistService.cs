@@ -4,7 +4,6 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
-using ProfilesApi.Infrastructure.Interfaces;
 
 namespace ProfilesApi.Application.Services;
 
@@ -19,9 +18,9 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         return receptionist.ToDto();
     }
 
-    public async Task<IEnumerable<ReceptionistDto>> GetAllReceptionistsAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<ReceptionistDto>> GetAllReceptionistsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var receptionists = await unitOfWork.Receptionists.GetAllAsync(cancellationToken: ct);
+        var receptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
         return receptionists.Select(receptionist => receptionist.ToDto());
     }
 

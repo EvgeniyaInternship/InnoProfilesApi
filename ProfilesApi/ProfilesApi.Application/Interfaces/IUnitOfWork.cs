@@ -2,7 +2,7 @@
 using ProfilesApi.Domain.Interfaces;
 using System.Data;
 
-namespace ProfilesApi.Infrastructure.Interfaces;
+namespace ProfilesApi.Application.Interfaces;
 
 public interface IUnitOfWork
 {

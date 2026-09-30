@@ -4,7 +4,6 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
-using ProfilesApi.Infrastructure.Interfaces;
 
 namespace ProfilesApi.Application.Services;
 
@@ -19,9 +18,9 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         return patient.ToDto();
     }
 
-    public async Task<IEnumerable<PatientDto>> GetAllPatientsAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<PatientDto>> GetAllPatientsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var patients = await unitOfWork.Patients.GetAllAsync(cancellationToken: ct);
+        var patients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
         return patients.Select(patient => patient.ToDto());
     }
 

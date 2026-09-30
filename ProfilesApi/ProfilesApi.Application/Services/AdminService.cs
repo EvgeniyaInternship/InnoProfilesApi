@@ -4,7 +4,6 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
-using ProfilesApi.Infrastructure.Interfaces;
 
 namespace ProfilesApi.Application.Services;
 
@@ -19,9 +18,9 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         return admin.ToDto();
     }
 
-    public async Task<IEnumerable<AdminDto>> GetAllAdminsAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<AdminDto>> GetAllAdminsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var admins = await unitOfWork.Admins.GetAllAsync(cancellationToken: ct);
+        var admins = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
         return admins.Select(admin => admin.ToDto());
     }
 
