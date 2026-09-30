@@ -2,6 +2,7 @@
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
@@ -14,9 +15,9 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, bool isTracked = false, CancellationToken cancellationToken = default)
+    public async Task<T?> GetAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default)
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
-           .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+           .FirstOrDefaultAsync(predicate, cancellationToken);
 
     public async Task<IEnumerable<T>> GetAllAsync(bool isTracked = false, CancellationToken cancellationToken = default)
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
