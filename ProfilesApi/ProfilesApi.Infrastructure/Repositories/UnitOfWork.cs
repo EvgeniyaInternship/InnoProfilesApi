@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
 using System.Data;
 
-namespace ProfilesApi.Application.Services;
+namespace ProfilesApi.Infrastructure.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {

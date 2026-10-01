@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Services;
+using ProfilesApi.Domain.Interfaces;
 using System.Reflection;
 
 namespace ProfilesApi.Application;

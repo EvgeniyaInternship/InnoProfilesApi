@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
-using ProfilesApi.Domain.Interfaces;
 using System.Data;
 
-namespace ProfilesApi.Application.Interfaces;
+namespace ProfilesApi.Domain.Interfaces;
 
 public interface IUnitOfWork
 {
