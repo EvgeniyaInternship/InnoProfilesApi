@@ -3,7 +3,6 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
-using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
 
 namespace ProfilesApi.Application.Services;
