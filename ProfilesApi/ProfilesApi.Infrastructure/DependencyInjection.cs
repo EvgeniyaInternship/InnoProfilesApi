@@ -29,6 +29,7 @@ public static class DependencyInjection
 
         services.AddDbContextFactory<ProfilesDbContext>();
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<IDoctorRepository, DoctorRepository>();

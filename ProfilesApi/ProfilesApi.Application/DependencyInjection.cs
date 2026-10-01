@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Services;
-using ProfilesApi.Domain.Interfaces;
 using System.Reflection;
 
 namespace ProfilesApi.Application;
@@ -13,7 +12,6 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IDoctorService, DoctorService>();
         services.AddScoped<IAdminService, AdminService>();
