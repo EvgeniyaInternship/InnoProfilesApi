@@ -37,22 +37,39 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default)
     {
-        var patient = await unitOfWork.Patients.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-        if (patient is null)
-            throw new KeyNotFoundException($"Patient with ID {dto.Id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var patient = await unitOfWork.Patients.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
+            if (patient is null)
+                throw new KeyNotFoundException($"Patient with ID {dto.Id} was not found.");
 
-        unitOfWork.Patients.Update(dto.UpdateEntity());
-        await unitOfWork.SaveChangesAsync(ct);
+            unitOfWork.Patients.Update(dto.UpdateEntity());
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task RemovePatientAsync(Guid id, CancellationToken ct = default)
     {
-        var patient = await unitOfWork.Patients.GetAsync(x => x.Id == id, true, cancellationToken: ct);
-        if (patient is null)
-            throw new KeyNotFoundException($"Patient with ID {id} was not found.");
-
-        unitOfWork.Patients.Remove(patient);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var patient = await unitOfWork.Patients.GetAsync(x => x.Id == id, true, cancellationToken: ct);
+            if (patient is null)
+                throw new KeyNotFoundException($"Patient with ID {id} was not found.");
+            unitOfWork.Patients.Remove(patient);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<PatientDto>> CreateRangeAsync(IEnumerable<CreatePatientDto> dtos, CancellationToken ct = default)

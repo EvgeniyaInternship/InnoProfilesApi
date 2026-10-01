@@ -41,22 +41,40 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task UpdateAccountAsync(UpdateAccountDto dto, CancellationToken ct = default)
     {
-        var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-        if (account is null)
-            throw new KeyNotFoundException($"Account with ID {dto.Id} was not found."); 
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.Id} was not found.");
 
-        unitOfWork.Accounts.Update(dto.UpdateEntity());
-        await unitOfWork.SaveChangesAsync(ct); 
+            unitOfWork.Accounts.Update(dto.UpdateEntity());
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task RemoveAccountAsync(Guid id, CancellationToken ct = default)
     {
-        var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, true, cancellationToken: ct); 
-        if (account is null)
-            throw new KeyNotFoundException($"Account with ID {id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, true, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {id} was not found.");
 
-        unitOfWork.Accounts.Remove(account);
-        await unitOfWork.SaveChangesAsync(ct); 
+            unitOfWork.Accounts.Remove(account);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<AccountDto>> CreateRangeAsync(IEnumerable<CreateAccountDto> dtos, CancellationToken ct = default)

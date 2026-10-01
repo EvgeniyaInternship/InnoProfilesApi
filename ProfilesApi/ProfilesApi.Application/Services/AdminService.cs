@@ -37,22 +37,40 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
     public async Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default)
     {
-        var admin = await unitOfWork.Admins.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-        if (admin is null)
-            throw new KeyNotFoundException($"Admin with ID {dto.Id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var admin = await unitOfWork.Admins.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
+            if (admin is null)
+                throw new KeyNotFoundException($"Admin with ID {dto.Id} was not found.");
 
-        unitOfWork.Admins.Update(dto.UpdateEntity());
-        await unitOfWork.SaveChangesAsync(ct);
+            unitOfWork.Admins.Update(dto.UpdateEntity());
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task RemoveAdminAsync(Guid id, CancellationToken ct = default)
     {
-        var admin = await unitOfWork.Admins.GetAsync(x => x.Id == id, true, cancellationToken: ct);
-        if (admin is null)
-            throw new KeyNotFoundException($"Admin with ID {id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var admin = await unitOfWork.Admins.GetAsync(x => x.Id == id, true, cancellationToken: ct);
+            if (admin is null)
+                throw new KeyNotFoundException($"Admin with ID {id} was not found.");
 
-        unitOfWork.Admins.Remove(admin);
-        await unitOfWork.SaveChangesAsync(ct);
+            unitOfWork.Admins.Remove(admin);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<AdminDto>> CreateRangeAsync(IEnumerable<CreateAdminDto> dtos, CancellationToken ct = default)

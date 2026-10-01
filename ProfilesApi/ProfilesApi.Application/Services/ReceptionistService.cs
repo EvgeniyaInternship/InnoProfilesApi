@@ -37,22 +37,40 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default)
     {
-        var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-        if (receptionist is null)
-            throw new KeyNotFoundException($"Receptionist with ID {dto.Id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
+            if (receptionist is null)
+                throw new KeyNotFoundException($"Receptionist with ID {dto.Id} was not found.");
 
-        unitOfWork.Receptionists.Update(dto.UpdateEntity());
-        await unitOfWork.SaveChangesAsync(ct);
+            unitOfWork.Receptionists.Update(dto.UpdateEntity());
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task RemoveReceptionistAsync(Guid id, CancellationToken ct = default)
     {
-        var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, true, cancellationToken: ct);
-        if (receptionist is null)
-            throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, true, cancellationToken: ct);
+            if (receptionist is null)
+                throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
 
-        unitOfWork.Receptionists.Remove(receptionist);
-        await unitOfWork.SaveChangesAsync(ct);
+            unitOfWork.Receptionists.Remove(receptionist);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<ReceptionistDto>> CreateRangeAsync(IEnumerable<CreateReceptionistDto> dtos, CancellationToken ct = default)
@@ -70,11 +88,20 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
     public async Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
 
-        unitOfWork.Receptionists.UpdateRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+            var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
+            unitOfWork.Receptionists.UpdateRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
