@@ -51,7 +51,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while updating patients.");
         }
     }
 
@@ -70,7 +70,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while removing patients.");
         }
     }
 
@@ -109,7 +109,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while updating patients.");
         }
     }
 
@@ -133,7 +133,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while removing patients.");
         }
     }
 }

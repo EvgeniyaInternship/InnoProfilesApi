@@ -51,7 +51,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while updating admins.");
         }
     }
 
@@ -71,7 +71,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while removing admins.");
         }
     }
 
@@ -110,7 +110,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while updating admins.");
         }
     }
 
@@ -134,7 +134,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while removing admins.");
         }
     }
 }

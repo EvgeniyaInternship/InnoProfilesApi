@@ -64,7 +64,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while creating accounts.");
         }
     }
 
@@ -84,7 +84,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while updating accounts.");
         }
     }
 
@@ -104,7 +104,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while removing accounts.");
         }
     }
 
@@ -136,7 +136,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while creating accounts.");
         }
     }
 
@@ -163,7 +163,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while updating accounts.");
         }
     }
 
@@ -187,7 +187,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while removing accounts.");
         }
     }
 }

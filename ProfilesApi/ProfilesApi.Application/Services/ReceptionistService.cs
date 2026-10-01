@@ -51,7 +51,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while updating receptionists.");
         }
     }
 
@@ -71,7 +71,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while removing receptionists.");
         }
     }
 
@@ -110,7 +110,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while updating receptionists.");
         }
     }
 
@@ -134,7 +134,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while removing receptionists.");
         }
     }
 }

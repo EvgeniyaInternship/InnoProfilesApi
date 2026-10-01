@@ -51,7 +51,7 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while updating doctors.");
         }
     }
 
@@ -72,7 +72,7 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while removing doctors.");
         }
     }
 
@@ -111,7 +111,7 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while updating doctors.");
         }
     }
 
@@ -135,7 +135,7 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(ct);
-            throw;
+            throw new Exception("An error occurred while removing doctors.");
         }
     }
 }
