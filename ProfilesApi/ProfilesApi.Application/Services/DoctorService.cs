@@ -1,14 +1,36 @@
-﻿using ProfilesApi.Application.DTOs.Requests.CreateRequests;
+﻿using ProfilesApi.Application.DTOs.Filters;
+using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
+using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
 public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 {
+    private static Expression<Func<DoctorEntity, bool>> BuildFilterExpression(DoctorFilterDto? filter)
+    {
+        if (filter is null)
+            return x => true;
+
+        var searchTerm = filter.SearchTerm?.Trim();
+
+        return x => (filter.OfficeId == null || x.OfficeId == filter.OfficeId)
+                 && (filter.SpecializationId == null || x.SpecializationId == filter.SpecializationId)
+                 && (filter.WorkStartDate == null || x.WorkStartDate == filter.WorkStartDate)
+                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
+                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
+                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
+                 && (string.IsNullOrWhiteSpace(searchTerm) ||
+                     x.FirstName.Contains(searchTerm) ||
+                     x.LastName.Contains(searchTerm) ||
+                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
+    }
+
     public async Task<DoctorDto> GetDoctorByIdAsync(Guid id, CancellationToken ct = default)
     {
         var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == id, cancellationToken: ct);
@@ -18,9 +40,12 @@ public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         return doctor.ToDto();
     }
 
-    public async Task<IEnumerable<DoctorDto>> GetAllDoctorsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task<IEnumerable<DoctorDto>> GetDoctorsAsync(DoctorFilterDto? filter = null, CancellationToken ct = default)
     {
-        var doctors = await unitOfWork.Doctors.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+        var filterExpression = BuildFilterExpression(filter);
+
+        var doctors = await unitOfWork.Doctors.GetAllAsync(filterExpression, cancellationToken: ct);
+
         return doctors.Select(doctor => doctor.ToDto());
     }
 

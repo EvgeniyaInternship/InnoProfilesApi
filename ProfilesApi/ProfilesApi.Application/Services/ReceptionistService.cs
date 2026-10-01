@@ -1,14 +1,35 @@
-﻿using ProfilesApi.Application.DTOs.Requests.CreateRequests;
+﻿using ProfilesApi.Application.DTOs.Filters;
+using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
+using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
 public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 {
+    private static Expression<Func<ReceptionistEntity, bool>> BuildFilterExpression(ReceptionistFilterDto? filter)
+    {
+        if (filter is null)
+            return x => true;
+        
+        var searchTerm = filter.SearchTerm?.Trim();
+
+        return x => (filter.OfficeId == null || x.OfficeId == filter.OfficeId)
+                 && (filter.WorkStartDate == null || x.WorkStartDate >= filter.WorkStartDate)
+                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
+                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
+                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
+                 && (string.IsNullOrWhiteSpace(searchTerm) ||
+                     x.FirstName.Contains(searchTerm) ||
+                     x.LastName.Contains(searchTerm) ||
+                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
+    }
+
     public async Task<ReceptionistDto> GetReceptionistByIdAsync(Guid id, CancellationToken ct = default)
     {
         var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, cancellationToken: ct);
@@ -18,9 +39,12 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         return receptionist.ToDto();
     }
 
-    public async Task<IEnumerable<ReceptionistDto>> GetAllReceptionistsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task<IEnumerable<ReceptionistDto>> GetReceptionistsAsync(ReceptionistFilterDto? filter = null, CancellationToken ct = default)
     {
-        var receptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+        var filterExpression = BuildFilterExpression(filter);
+
+        var receptionists = await unitOfWork.Receptionists.GetAllAsync(filterExpression, cancellationToken: ct);
+
         return receptionists.Select(receptionist => receptionist.ToDto());
     }
 

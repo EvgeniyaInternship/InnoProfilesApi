@@ -4,12 +4,29 @@ using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
+using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
 public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 {
+    private static Expression<Func<AccountEntity, bool>> BuildFilterExpression(AccountFilterDto? filter)
+    {
+        if (filter is null)
+            return x => true;
+
+        var searchTerm = filter.SearchTerm?.Trim();
+
+        return x => (filter.Role == null || x.Role == filter.Role)
+                 && (string.IsNullOrWhiteSpace(filter.Email) || x.Email.Contains(filter.Email))
+                 && (string.IsNullOrWhiteSpace(filter.PhoneNumber) || x.PhoneNumber.Contains(filter.PhoneNumber))
+                 && (string.IsNullOrWhiteSpace(searchTerm) ||
+                     x.Email.Contains(searchTerm) ||
+                     x.PhoneNumber.Contains(searchTerm));
+    }
+
     public async Task<AccountDto> GetAccountByIdAsync(Guid id, CancellationToken ct = default)
     {
         var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, cancellationToken: ct);
@@ -21,24 +38,9 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task<IEnumerable<AccountDto>> GetAccountsAsync(AccountFilterDto? filter = null, CancellationToken ct = default)
     {
-        if (filter is null)
-        {
-            var allAccounts = await unitOfWork.Accounts.GetAllAsync(x => true, cancellationToken: ct);
-            return allAccounts.Select(account => account.ToDto());
-        }
+        var filterExpression = BuildFilterExpression(filter);
 
-        var searchTerm = filter.SearchTerm?.Trim();
-
-        var accounts = await unitOfWork.Accounts.GetAllAsync(
-            x => (filter.Ids == null || !filter.Ids.Any() || filter.Ids.Contains(x.Id))
-              && (filter.Role == null || x.Role == filter.Role)
-              && (string.IsNullOrWhiteSpace(filter.Email) || x.Email.Contains(filter.Email))
-              && (string.IsNullOrWhiteSpace(filter.PhoneNumber) || x.PhoneNumber.Contains(filter.PhoneNumber))
-              && (string.IsNullOrWhiteSpace(searchTerm) ||
-                  x.Email.Contains(searchTerm) ||
-                  x.PhoneNumber.Contains(searchTerm)),
-            cancellationToken: ct
-        );
+        var accounts = await unitOfWork.Accounts.GetAllAsync(filterExpression, cancellationToken: ct);
 
         return accounts.Select(account => account.ToDto());
     }
@@ -129,6 +131,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
             unitOfWork.Accounts.AddRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             return entities.Select(account => account.ToDto());
         }

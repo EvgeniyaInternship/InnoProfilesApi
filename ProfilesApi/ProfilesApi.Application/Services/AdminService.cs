@@ -1,14 +1,35 @@
-﻿using ProfilesApi.Application.DTOs.Requests.CreateRequests;
+﻿using ProfilesApi.Application.DTOs.Filters;
+using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
+using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
 public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 {
+    private static Expression<Func<AdminEntity, bool>> BuildFilterExpression(AdminFilterDto? filter)
+    {
+        if (filter is null)
+            return x => true;
+
+        var searchTerm = filter.SearchTerm?.Trim();
+
+        return x => (filter.OfficeId == null || x.OfficeId == filter.OfficeId)
+                 && (filter.WorkStartDateFrom == null || x.WorkStartDate >= filter.WorkStartDateFrom)
+                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
+                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
+                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
+                 && (string.IsNullOrWhiteSpace(searchTerm) ||
+                     x.FirstName.Contains(searchTerm) ||
+                     x.LastName.Contains(searchTerm) ||
+                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
+    }
+
     public async Task<AdminDto> GetAdminByIdAsync(Guid id, CancellationToken ct = default)
     {
         var admin = await unitOfWork.Admins.GetAsync(x => x.Id == id, cancellationToken: ct);
@@ -18,9 +39,12 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         return admin.ToDto();
     }
 
-    public async Task<IEnumerable<AdminDto>> GetAllAdminsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task<IEnumerable<AdminDto>> GetAdminsAsync(AdminFilterDto? filter = null, CancellationToken ct = default)
     {
-        var admins = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+        var filterExpression = BuildFilterExpression(filter);
+
+        var admins = await unitOfWork.Admins.GetAllAsync(filterExpression, cancellationToken: ct);
+
         return admins.Select(admin => admin.ToDto());
     }
 

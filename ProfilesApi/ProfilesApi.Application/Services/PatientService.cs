@@ -1,14 +1,35 @@
-﻿using ProfilesApi.Application.DTOs.Requests.CreateRequests;
+﻿using ProfilesApi.Application.DTOs.Filters;
+using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
+using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
 public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 {
+    private static Expression<Func<PatientEntity, bool>> BuildFilterExpression(PatientFilterDto? filter)
+    {
+        if (filter is null)
+            return x => true;
+
+        var searchTerm = filter.SearchTerm?.Trim();
+
+        return x => (string.IsNullOrWhiteSpace(filter.InsuranceNumber) || x.InsuranceNumber.Contains(filter.InsuranceNumber))
+                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
+                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
+                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
+                 && (string.IsNullOrWhiteSpace(searchTerm) ||
+                     x.FirstName.Contains(searchTerm) ||
+                     x.LastName.Contains(searchTerm) ||
+                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)) ||
+                     x.InsuranceNumber.Contains(searchTerm));
+    }
+
     public async Task<PatientDto> GetPatientByIdAsync(Guid id, CancellationToken ct = default)
     {
         var patient = await unitOfWork.Patients.GetAsync(x => x.Id == id, cancellationToken: ct);
@@ -18,9 +39,12 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
         return patient.ToDto();
     }
 
-    public async Task<IEnumerable<PatientDto>> GetAllPatientsByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task<IEnumerable<PatientDto>> GetPatientsAsync(PatientFilterDto? filter = null, CancellationToken ct = default)
     {
-        var patients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+        var filterExpression = BuildFilterExpression(filter);
+
+        var patients = await unitOfWork.Patients.GetAllAsync(filterExpression, cancellationToken: ct);
+
         return patients.Select(patient => patient.ToDto());
     }
 
