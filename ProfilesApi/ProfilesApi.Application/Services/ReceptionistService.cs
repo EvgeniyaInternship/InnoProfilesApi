@@ -77,7 +77,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
     {
         if (!dtos.Any()) return [];
 
-        var entities = dtos.Select(dto => dto.ToEntity()).ToList();
+        var entities = dtos.Select(dto => dto.ToEntity());
 
         unitOfWork.Receptionists.AddRange(entities);
         await unitOfWork.SaveChangesAsync(ct);
@@ -92,8 +92,8 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-            var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
+            var uniqueDtos = dtos.DistinctBy(d => d.Id);
+            var entities = uniqueDtos.Select(d => d.UpdateEntity());
             unitOfWork.Receptionists.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
         }
@@ -106,9 +106,8 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var entitiesToDelete = ids.Distinct().Select(id => new ReceptionistEntity { Id = id }).ToList();
-
-        if (entitiesToDelete.Count == 0) return;
+        var entitiesToDelete = ids.Distinct().Select(id => new ReceptionistEntity { Id = id });
+        if (!entitiesToDelete.Any()) return;
 
         unitOfWork.Receptionists.RemoveRange(entitiesToDelete);
         await unitOfWork.SaveChangesAsync(ct);

@@ -92,7 +92,7 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
         if (existingAccounts.Any())
             throw new InvalidOperationException("An account with one of the provided emails or phone numbers already exists.");
 
-        var entities = dtos.Select(dto => dto.ToEntity()).ToList(); 
+        var entities = dtos.Select(dto => dto.ToEntity());  
 
         unitOfWork.Accounts.AddRange(entities); 
         await unitOfWork.SaveChangesAsync(ct); 
@@ -103,8 +103,8 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
     public async Task UpdateRangeAsync(IEnumerable<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
+        var uniqueDtos = dtos.DistinctBy(d => d.Id);
+        var entities = uniqueDtos.Select(d => d.UpdateEntity());
 
         unitOfWork.Accounts.UpdateRange(entities);
 
@@ -113,9 +113,8 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var entitiesToDelete = ids.Distinct().Select(id => new AccountEntity { Id = id }).ToList();
-
-        if (entitiesToDelete.Count == 0) return;
+        var entitiesToDelete = ids.Distinct().Select(id => new AccountEntity { Id = id });
+        if (!entitiesToDelete.Any()) return;
 
         unitOfWork.Accounts.RemoveRange(entitiesToDelete); 
         await unitOfWork.SaveChangesAsync(ct); 
