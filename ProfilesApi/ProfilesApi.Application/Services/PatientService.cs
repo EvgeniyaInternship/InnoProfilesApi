@@ -46,6 +46,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
             unitOfWork.Patients.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -64,6 +65,7 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
                 throw new KeyNotFoundException($"Patient with ID {id} was not found.");
             unitOfWork.Patients.Remove(patient);
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -86,20 +88,52 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return;
-        var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        var entities = uniqueDtos.Select(d => d.UpdateEntity());
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        if (uniqueDtos.Count == 0) return;
 
-        unitOfWork.Patients.UpdateRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var ids = uniqueDtos.Select(d => d.Id).ToList();
+
+            var existingPatients = (await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
+            if (existingPatients.Count != uniqueDtos.Count)
+                throw new KeyNotFoundException("One or more patients were not found.");
+
+            var entities = uniqueDtos.Select(d => d.UpdateEntity());
+
+            unitOfWork.Patients.UpdateRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var entitiesToDelete = ids.Distinct().Select(id => new PatientEntity { Id = id });
-        if (!entitiesToDelete.Any()) return;
+        var distinctIds = ids.Distinct().ToList();
+        if (distinctIds.Count == 0) return;
 
-        unitOfWork.Patients.RemoveRange(entitiesToDelete);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var existingPatients = (await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+
+            if (existingPatients.Count != distinctIds.Count)
+                throw new KeyNotFoundException("One or more patients were not found.");
+
+            unitOfWork.Patients.RemoveRange(existingPatients);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 }

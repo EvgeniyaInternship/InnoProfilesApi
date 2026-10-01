@@ -46,6 +46,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
             unitOfWork.Admins.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -65,6 +66,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
             unitOfWork.Admins.Remove(admin);
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -87,20 +89,52 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateAdminDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return;
-        var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        var entities = uniqueDtos.Select(d => d.UpdateEntity());
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        if (uniqueDtos.Count == 0) return;
 
-        unitOfWork.Admins.UpdateRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var ids = uniqueDtos.Select(d => d.Id).ToList();
+
+            var existingAdmins = (await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
+            if (existingAdmins.Count != uniqueDtos.Count)
+                throw new KeyNotFoundException("One or more admins were not found.");
+
+            var entities = uniqueDtos.Select(d => d.UpdateEntity());
+
+            unitOfWork.Admins.UpdateRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var entitiesToDelete = ids.Distinct().Select(id => new AdminEntity { Id = id });
-        if (!entitiesToDelete.Any()) return;
+        var distinctIds = ids.Distinct().ToList();
+        if (distinctIds.Count == 0) return;
 
-        unitOfWork.Admins.RemoveRange(entitiesToDelete);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var existingAdmins = (await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+
+            if (existingAdmins.Count != distinctIds.Count)
+                throw new KeyNotFoundException("One or more admins were not found.");
+
+            unitOfWork.Admins.RemoveRange(existingAdmins);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 }

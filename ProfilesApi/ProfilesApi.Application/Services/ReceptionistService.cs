@@ -46,6 +46,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
             unitOfWork.Receptionists.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -65,6 +66,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
             unitOfWork.Receptionists.Remove(receptionist);
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -87,15 +89,23 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return;
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        if (uniqueDtos.Count == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var uniqueDtos = dtos.DistinctBy(d => d.Id);
+            var ids = uniqueDtos.Select(d => d.Id).ToList();
+
+            var existingReceptionists = (await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
+            if (existingReceptionists.Count != uniqueDtos.Count)
+                throw new KeyNotFoundException("One or more receptionists were not found.");
+
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
+
             unitOfWork.Receptionists.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch
         {
@@ -106,10 +116,25 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var entitiesToDelete = ids.Distinct().Select(id => new ReceptionistEntity { Id = id });
-        if (!entitiesToDelete.Any()) return;
+        var distinctIds = ids.Distinct().ToList();
+        if (distinctIds.Count == 0) return;
 
-        unitOfWork.Receptionists.RemoveRange(entitiesToDelete);
-        await unitOfWork.SaveChangesAsync(ct);
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var existingReceptionists = (await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+
+            if (existingReceptionists.Count != distinctIds.Count)
+                throw new KeyNotFoundException("One or more receptionists were not found.");
+
+            unitOfWork.Receptionists.RemoveRange(existingReceptionists);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
     }
 }

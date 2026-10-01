@@ -10,7 +10,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
 {
     private readonly DbSet<T> _dbSet;
 
-    public GenericRepository(ProfilesDbContext context)
+    protected GenericRepository(ProfilesDbContext context)
     {
         _dbSet = context.Set<T>();
     }
