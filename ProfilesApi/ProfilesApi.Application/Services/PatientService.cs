@@ -70,7 +70,8 @@ public class PatientService(IUnitOfWork unitOfWork) : IPatientService
     public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
-        var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
 
         unitOfWork.Patients.UpdateRange(entities);
         await unitOfWork.SaveChangesAsync(ct);

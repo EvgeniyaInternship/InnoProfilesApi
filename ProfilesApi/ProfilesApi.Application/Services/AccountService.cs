@@ -63,6 +63,17 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
     {
         if (!dtos.Any()) return [];
 
+        var emails = dtos.Select(x => x.Email).ToHashSet();
+        var phones = dtos.Select(x => x.PhoneNumber).ToHashSet();
+
+        var existingAccounts = await unitOfWork.Accounts.GetAllAsync(
+            x => emails.Contains(x.Email) || phones.Contains(x.PhoneNumber),
+            cancellationToken: ct
+        );
+
+        if (existingAccounts.Any())
+            throw new InvalidOperationException("An account with one of the provided emails or phone numbers already exists.");
+
         var entities = dtos.Select(dto => dto.ToEntity()).ToList(); 
 
         unitOfWork.Accounts.AddRange(entities); 
@@ -74,7 +85,8 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
     public async Task UpdateRangeAsync(IEnumerable<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
-        var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
 
         unitOfWork.Accounts.UpdateRange(entities);
 

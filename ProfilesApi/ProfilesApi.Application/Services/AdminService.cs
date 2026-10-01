@@ -70,7 +70,8 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
     public async Task UpdateRangeAsync(IEnumerable<UpdateAdminDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
-        var entities = dtos.Select(d => d.UpdateEntity()).Distinct().ToList();
+        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
+        var entities = uniqueDtos.Select(d => d.UpdateEntity()).ToList();
 
         unitOfWork.Admins.UpdateRange(entities);
         await unitOfWork.SaveChangesAsync(ct);
