@@ -38,12 +38,17 @@ public static class AdminMappingExtensions
         };
     }
 
-    public static void UpdateEntity(this UpdateAdminDto dto, AdminEntity entity)
+    public static AdminEntity UpdateEntity(this UpdateAdminDto dto)
     {
-        entity.BirthDate = dto.BirthDate;
-        entity.FirstName = dto.FirstName;
-        entity.LastName = dto.LastName;
-        entity.MiddleName = dto.MiddleName;
-        entity.WorkStartDate = dto.WorkStartDate;
+        return new AdminEntity
+        {
+            Id = dto.Id,
+            BirthDate = dto.BirthDate,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
+            WorkStartDate = dto.WorkStartDate,
+            OfficeId = dto.OfficeId,
+        };
     }
 }

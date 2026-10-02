@@ -2,6 +2,7 @@
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
+using System.Linq.Expressions;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
@@ -9,17 +10,18 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
 {
     private readonly DbSet<T> _dbSet;
 
-    public GenericRepository(ProfilesDbContext context)
+    protected GenericRepository(ProfilesDbContext context)
     {
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, bool isTracked = false, CancellationToken cancellationToken = default)
+    public async Task<T?> GetAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default)
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
-           .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+           .FirstOrDefaultAsync(predicate, cancellationToken);
 
-    public async Task<IEnumerable<T>> GetAllAsync(bool isTracked = false, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default)
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
+           .Where(predicate)
            .ToListAsync(cancellationToken);
 
     public void Add(T entity)
@@ -31,7 +33,6 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     public void Update(T entity)
         => _dbSet.Update(entity);
     
-
     public void UpdateRange(IEnumerable<T> entities)
         => _dbSet.UpdateRange(entities);
 

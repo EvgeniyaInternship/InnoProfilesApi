@@ -36,12 +36,16 @@ public static class PatientMappingExtensions
         };
     }
 
-    public static void UpdateEntity(this UpdatePatientDto dto, PatientEntity entity)
+    public static PatientEntity UpdateEntity(this UpdatePatientDto dto)
     {
-        entity.BirthDate = dto.BirthDate;
-        entity.FirstName = dto.FirstName;
-        entity.LastName = dto.LastName;
-        entity.MiddleName = dto.MiddleName;
-        entity.InsuranceNumber = dto.InsuranceNumber;
+        return new PatientEntity
+        {
+            Id = dto.Id,
+            BirthDate = dto.BirthDate,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
+            InsuranceNumber = dto.InsuranceNumber,
+        };
     }
 }

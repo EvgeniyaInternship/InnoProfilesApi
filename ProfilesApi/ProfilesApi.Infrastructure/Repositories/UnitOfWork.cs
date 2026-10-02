@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
-using ProfilesApi.Infrastructure.Interfaces;
 using System.Data;
 
 namespace ProfilesApi.Infrastructure.Repositories;

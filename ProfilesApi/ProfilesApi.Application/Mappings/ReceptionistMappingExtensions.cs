@@ -38,13 +38,17 @@ public static class ReceptionistMappingExtensions
         };
     }
 
-    public static void UpdateEntity(this UpdateReceptionistDto dto, ReceptionistEntity entity)
+    public static ReceptionistEntity UpdateEntity(this UpdateReceptionistDto dto)
     {
-        entity.BirthDate = dto.BirthDate;
-        entity.FirstName = dto.FirstName;
-        entity.LastName = dto.LastName;
-        entity.MiddleName = dto.MiddleName;
-        entity.WorkStartDate = dto.WorkStartDate;
-        entity.OfficeId = dto.OfficeId;
+        return new ReceptionistEntity
+        {
+            Id = dto.Id,
+            BirthDate = dto.BirthDate,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
+            WorkStartDate = dto.WorkStartDate,
+            OfficeId = dto.OfficeId,
+        };
     }
 }

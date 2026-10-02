@@ -1,6 +1,6 @@
 ﻿using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
-using ProfilesApi.Infrastructure.Interfaces;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 

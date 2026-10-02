@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ProfilesApi.Domain.Interfaces;
 using ProfilesApi.Infrastructure.Context;
 using ProfilesApi.Infrastructure.Data;
-using ProfilesApi.Infrastructure.Interfaces;
 using ProfilesApi.Infrastructure.Repositories;
 using System.Reflection;
 
@@ -29,12 +29,12 @@ public static class DependencyInjection
 
         services.AddDbContextFactory<ProfilesDbContext>();
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IAdminRepository, AdminRepository>();
         services.AddScoped<IDoctorRepository, DoctorRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IReceptionistRepository, ReceptionistRepository>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }
