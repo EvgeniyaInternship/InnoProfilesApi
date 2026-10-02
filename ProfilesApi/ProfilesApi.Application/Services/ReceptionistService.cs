@@ -39,7 +39,7 @@ public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
         return receptionist.ToDto();
     }
 
-    public async Task<IEnumerable<ReceptionistDto>> GetReceptionistsAsync(ReceptionistFilterDto? filter = null, CancellationToken ct = default)
+    public async Task<IEnumerable<ReceptionistDto>> GetReceptionistsAsync(ReceptionistFilterDto? filter, CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
 
