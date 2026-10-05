@@ -13,7 +13,6 @@ public static class ReceptionistMappingExtensions
             entity.Id,
             entity.CreatedAt,
             entity.UpdatedAt,
-            entity.IsDeleted,
             entity.AccountId,
             entity.BirthDate,
             entity.FirstName,
