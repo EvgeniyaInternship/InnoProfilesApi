@@ -4,7 +4,7 @@ using ProfilesApi.Domain.Entities;
 
 namespace ProfilesApi.Infrastructure.Interceptors;
 
-public class SoftDeleteInterceptor : SaveChangesInterceptor
+public sealed class SoftDeleteInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {

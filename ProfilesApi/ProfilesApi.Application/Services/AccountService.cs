@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public class AccountService(IUnitOfWork unitOfWork) : IAccountService
+public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 {
     private static Expression<Func<AccountEntity, bool>> BuildFilterExpression(AccountFilterDto? filter)
     {

@@ -4,7 +4,7 @@ using ProfilesApi.Infrastructure.Context;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
-public class ReceptionistRepository : GenericRepository<ReceptionistEntity>, IReceptionistRepository
+public sealed class ReceptionistRepository : GenericRepository<ReceptionistEntity>, IReceptionistRepository
 {
     public ReceptionistRepository(ProfilesDbContext context) : base(context) { }
 }

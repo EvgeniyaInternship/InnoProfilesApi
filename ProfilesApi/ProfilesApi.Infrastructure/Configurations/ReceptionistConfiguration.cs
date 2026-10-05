@@ -4,7 +4,7 @@ using ProfilesApi.Domain.Entities;
 
 namespace ProfilesApi.Infrastructure.Configurations;
 
-public class ReceptionistConfiguration : IEntityTypeConfiguration<ReceptionistEntity>
+public sealed class ReceptionistConfiguration : IEntityTypeConfiguration<ReceptionistEntity>
 {
     public void Configure(EntityTypeBuilder<ReceptionistEntity> builder)
     {

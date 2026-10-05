@@ -4,7 +4,6 @@ public sealed record DoctorDto(
     Guid Id,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    bool IsDeleted,
     Guid AccountId,
     DateTime BirthDate,
     string FirstName,

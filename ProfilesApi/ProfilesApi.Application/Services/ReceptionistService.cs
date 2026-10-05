@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
+public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
 {
     private static Expression<Func<ReceptionistEntity, bool>> BuildFilterExpression(ReceptionistFilterDto? filter)
     {
