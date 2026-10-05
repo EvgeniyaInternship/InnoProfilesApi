@@ -14,7 +14,8 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAdminById(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetAdminById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var admin = await adminService.GetAdminByIdAsync(id, cancellationToken);
         return Ok(admin);
@@ -22,6 +23,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AdminDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAdmins([FromQuery] AdminFilterDto? filter, CancellationToken cancellationToken)
     {
         var admins = await adminService.GetAdminsAsync(filter, cancellationToken);
@@ -31,6 +33,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto, CancellationToken cancellationToken)
     {
         var admin = await adminService.CreateAdminAsync(dto, cancellationToken);
@@ -41,17 +44,9 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateAdmin(Guid id, [FromBody] UpdateAdminDto dto, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateAdmin([FromBody] UpdateAdminDto dto, CancellationToken cancellationToken)
     {
-        if (id != dto.Id)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid request",
-                Detail = "The Route ID and Body DTO ID must match."
-            });
-        }
-
         await adminService.UpdateAdminAsync(dto, cancellationToken);
         return NoContent();
     }
@@ -59,7 +54,8 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveAdmin(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoveAdmin([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         await adminService.RemoveAdminAsync(id, cancellationToken);
         return NoContent();
@@ -68,6 +64,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpPost("batch")]
     [ProducesResponseType(typeof(IEnumerable<AdminDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreateAdminDto> dtos, CancellationToken cancellationToken)
     {
         var admins = await adminService.CreateRangeAsync(dtos, cancellationToken);
@@ -78,6 +75,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdateAdminDto> dtos, CancellationToken cancellationToken)
     {
         await adminService.UpdateRangeAsync(dtos, cancellationToken);
@@ -88,6 +86,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
     {
         await adminService.RemoveRangeAsync(ids, cancellationToken);

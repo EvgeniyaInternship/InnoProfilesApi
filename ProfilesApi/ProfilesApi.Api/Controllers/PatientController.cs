@@ -14,7 +14,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPatientById(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPatientById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var patient = await patientService.GetPatientByIdAsync(id, cancellationToken);
         return Ok(patient);
@@ -31,6 +31,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreatePatient([FromBody] CreatePatientDto dto, CancellationToken cancellationToken)
     {
         var patient = await patientService.CreatePatientAsync(dto, cancellationToken);
@@ -41,17 +42,9 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdatePatient(Guid id, [FromBody] UpdatePatientDto dto, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdatePatient([FromBody] UpdatePatientDto dto, CancellationToken cancellationToken)
     {
-        if (id != dto.Id)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid request",
-                Detail = "The Route ID and Body DTO ID must match."
-            });
-        }
-
         await patientService.UpdatePatientAsync(dto, cancellationToken);
         return NoContent();
     }
@@ -59,7 +52,8 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemovePatient(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemovePatient([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         await patientService.RemovePatientAsync(id, cancellationToken);
         return NoContent();
@@ -68,6 +62,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [HttpPost("batch")]
     [ProducesResponseType(typeof(IEnumerable<PatientDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreatePatientDto> dtos, CancellationToken cancellationToken)
     {
         var patients = await patientService.CreateRangeAsync(dtos, cancellationToken);
@@ -78,6 +73,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdatePatientDto> dtos, CancellationToken cancellationToken)
     {
         await patientService.UpdateRangeAsync(dtos, cancellationToken);
@@ -88,6 +84,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
     {
         await patientService.RemoveRangeAsync(ids, cancellationToken);

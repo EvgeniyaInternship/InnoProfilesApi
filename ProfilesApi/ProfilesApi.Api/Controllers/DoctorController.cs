@@ -14,7 +14,8 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetDoctorById(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetDoctorById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var doctor = await doctorService.GetDoctorByIdAsync(id, cancellationToken);
         return Ok(doctor);
@@ -22,6 +23,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, CancellationToken cancellationToken)
     {
         var doctors = await doctorService.GetDoctorsAsync(filter, cancellationToken);
@@ -31,6 +33,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateDoctor([FromBody] CreateDoctorDto dto, CancellationToken cancellationToken)
     {
         var doctor = await doctorService.CreateDoctorAsync(dto, cancellationToken);
@@ -41,17 +44,9 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateDoctor(Guid id, [FromBody] UpdateDoctorDto dto, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateDoctor([FromBody] UpdateDoctorDto dto, CancellationToken cancellationToken)
     {
-        if (id != dto.Id)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid request",
-                Detail = "The Route ID and Body DTO ID must match."
-            });
-        }
-
         await doctorService.UpdateDoctorAsync(dto, cancellationToken);
         return NoContent();
     }
@@ -59,7 +54,8 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveDoctor(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoveDoctor([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         await doctorService.RemoveDoctorAsync(id, cancellationToken);
         return NoContent();
@@ -68,6 +64,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [HttpPost("batch")]
     [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreateDoctorDto> dtos, CancellationToken cancellationToken)
     {
         var doctors = await doctorService.CreateRangeAsync(dtos, cancellationToken);
@@ -78,6 +75,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdateDoctorDto> dtos, CancellationToken cancellationToken)
     {
         await doctorService.UpdateRangeAsync(dtos, cancellationToken);
@@ -88,6 +86,7 @@ public class DoctorController(IDoctorService doctorService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
     {
         await doctorService.RemoveRangeAsync(ids, cancellationToken);

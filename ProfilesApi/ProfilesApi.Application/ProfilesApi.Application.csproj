@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ProfilesApi.Domain\ProfilesApi.Domain.csproj" />
+    <ProjectReference Include="..\ProfilesApi.Infrastructure\ProfilesApi.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
