@@ -6,7 +6,7 @@ using ProfilesApi.Infrastructure.Data;
 
 namespace ProfilesApi.Infrastructure.Context;
 
-public class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions, 
+public sealed class ProfilesDbContext(IOptions<DatabaseOptions> dbOptions, 
                                IEnumerable<IInterceptor> interceptors) : DbContext()
 {
     public DbSet<AccountEntity> Accounts { get; init; }

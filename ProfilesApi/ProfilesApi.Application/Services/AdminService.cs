@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public class AdminService(IUnitOfWork unitOfWork) : IAdminService
+public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 {
     private static Expression<Func<AdminEntity, bool>> BuildFilterExpression(AdminFilterDto? filter)
     {

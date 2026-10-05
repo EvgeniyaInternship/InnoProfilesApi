@@ -4,7 +4,7 @@ using ProfilesApi.Domain.Entities;
 
 namespace ProfilesApi.Infrastructure.Configurations;
 
-public class AccountConfiguration : IEntityTypeConfiguration<AccountEntity>
+public sealed class AccountConfiguration : IEntityTypeConfiguration<AccountEntity>
 {
     public void Configure(EntityTypeBuilder<AccountEntity> builder)
     {

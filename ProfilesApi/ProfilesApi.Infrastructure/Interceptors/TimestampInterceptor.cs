@@ -4,7 +4,7 @@ using ProfilesApi.Domain.Entities;
 
 namespace ProfilesApi.Infrastructure.Interceptors;
 
-public class TimestampInterceptor : SaveChangesInterceptor
+public sealed class TimestampInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData, InterceptionResult<int> result)

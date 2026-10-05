@@ -9,7 +9,7 @@ namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ReceptionistController(IReceptionistService receptionistService) : ControllerBase
+public sealed class ReceptionistController(IReceptionistService receptionistService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ReceptionistDto), StatusCodes.Status200OK)]
@@ -40,7 +40,7 @@ public class ReceptionistController(IReceptionistService receptionistService) : 
         return CreatedAtAction(nameof(GetReceptionistById), new { id = receptionist.Id }, receptionist);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

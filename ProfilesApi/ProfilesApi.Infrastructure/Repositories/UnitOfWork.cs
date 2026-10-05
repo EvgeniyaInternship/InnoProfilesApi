@@ -6,7 +6,7 @@ using System.Data;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
-public class UnitOfWork : IUnitOfWork
+public sealed class UnitOfWork : IUnitOfWork
 {
     private readonly ProfilesDbContext _context;
 

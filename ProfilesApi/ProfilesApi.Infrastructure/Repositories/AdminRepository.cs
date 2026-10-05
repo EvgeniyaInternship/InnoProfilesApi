@@ -4,7 +4,7 @@ using ProfilesApi.Infrastructure.Context;
 
 namespace ProfilesApi.Infrastructure.Repositories;
 
-public class AdminRepository : GenericRepository<AdminEntity>, IAdminRepository
+public sealed class AdminRepository : GenericRepository<AdminEntity>, IAdminRepository
 {
     public AdminRepository(ProfilesDbContext context) : base(context) { }
 }

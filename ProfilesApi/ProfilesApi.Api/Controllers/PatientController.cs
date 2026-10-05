@@ -9,7 +9,7 @@ namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class PatientController(IPatientService patientService) : ControllerBase
+public sealed class PatientController(IPatientService patientService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
@@ -38,7 +38,7 @@ public class PatientController(IPatientService patientService) : ControllerBase
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, patient);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

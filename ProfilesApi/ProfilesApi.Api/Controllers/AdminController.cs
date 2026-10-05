@@ -9,7 +9,7 @@ namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AdminController(IAdminService adminService) : ControllerBase
+public sealed class AdminController(IAdminService adminService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
@@ -40,7 +40,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
         return CreatedAtAction(nameof(GetAdminById), new { id = admin.Id }, admin);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

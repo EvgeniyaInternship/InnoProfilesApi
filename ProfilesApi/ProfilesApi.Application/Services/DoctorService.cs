@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
+public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 {
     private static Expression<Func<DoctorEntity, bool>> BuildFilterExpression(DoctorFilterDto? filter)
     {

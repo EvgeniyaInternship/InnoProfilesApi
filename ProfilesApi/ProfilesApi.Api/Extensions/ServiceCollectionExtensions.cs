@@ -1,4 +1,5 @@
 ﻿using ProfilesApi.Application;
+using ProfilesApi.Infrastructure;
 
 namespace ProfilesApi.Api.Extensions;
 
@@ -6,7 +7,9 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddLayerServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddApplicationServices(configuration);
+
+        services.AddInfrastructure(configuration);
+        services.AddApplicationServices();
 
         return services;
     }

@@ -9,7 +9,7 @@ namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AccountController(IAccountService accountService) : ControllerBase
+public sealed class AccountController(IAccountService accountService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
@@ -40,7 +40,7 @@ public class AccountController(IAccountService accountService) : ControllerBase
         return CreatedAtAction(nameof(GetAccountById), new { id = account.Id }, account);
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

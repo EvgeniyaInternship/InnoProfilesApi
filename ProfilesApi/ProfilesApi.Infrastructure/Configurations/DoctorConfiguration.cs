@@ -4,7 +4,7 @@ using ProfilesApi.Domain.Entities;
 
 namespace ProfilesApi.Infrastructure.Configurations;
 
-public class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
+public sealed class DoctorConfiguration : IEntityTypeConfiguration<DoctorEntity>
 {
     public void Configure(EntityTypeBuilder<DoctorEntity> builder)
     {
