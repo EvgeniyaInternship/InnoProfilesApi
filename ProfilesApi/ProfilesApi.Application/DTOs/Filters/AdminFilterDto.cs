@@ -1,6 +1,6 @@
 ﻿namespace ProfilesApi.Application.DTOs.Filters;
 
-public record AdminFilterDto(
+public sealed record AdminFilterDto(
     Guid? OfficeId,
     DateTime? WorkStartDateFrom,
     string? FirstName,

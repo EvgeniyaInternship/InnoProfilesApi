@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -24,9 +25,9 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
     {
-        var doctors = await doctorService.GetDoctorsAsync(filter, cancellationToken);
+        var doctors = await doctorService.GetDoctorsAsync(filter, paginationParams, cancellationToken);
         return Ok(doctors);
     }
 

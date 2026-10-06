@@ -6,7 +6,12 @@ namespace ProfilesApi.Domain.Interfaces;
 public interface IGenericRepository<T> where T : BaseEntity
 {
     Task<T?> GetAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default);
-    Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<T> Items, int TotalCount)> GetAllAsync(
+        Expression<Func<T, bool>> predicate,
+        int? pageNumber = null,
+        int? pageSize = null,
+        bool isTracked = false,
+        CancellationToken cancellationToken = default);
     void Add(T entity);
     void AddRange(IEnumerable<T> entities);
     void Update(T entity);

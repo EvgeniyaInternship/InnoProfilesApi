@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -22,9 +23,9 @@ public sealed class PatientController(IPatientService patientService) : Controll
 
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<PatientDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPatients([FromQuery] PatientFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPatients([FromQuery] PatientFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
     {
-        var patients = await patientService.GetPatientsAsync(filter, cancellationToken);
+        var patients = await patientService.GetPatientsAsync(filter, paginationParams, cancellationToken);
         return Ok(patients);
     }
 
