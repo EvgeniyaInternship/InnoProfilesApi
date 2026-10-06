@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -24,10 +25,10 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<AccountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAccounts([FromQuery] AccountFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAccounts([FromQuery] AccountFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
     {
-        var accounts = await accountService.GetAccountsAsync(filter, cancellationToken);
-        return Ok(accounts);
+        var pagedAccounts = await accountService.GetAccountsAsync(filter, paginationParams, cancellationToken);
+        return Ok(pagedAccounts);
     }
 
     [HttpPost]

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -24,9 +25,9 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
     {
-        var receptionists = await receptionistService.GetReceptionistsAsync(filter, cancellationToken);
+        var receptionists = await receptionistService.GetReceptionistsAsync(filter, paginationParams, cancellationToken);
         return Ok(receptionists);
     }
 

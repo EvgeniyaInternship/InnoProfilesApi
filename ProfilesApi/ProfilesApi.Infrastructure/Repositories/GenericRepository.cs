@@ -19,10 +19,27 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
            .FirstOrDefaultAsync(predicate, cancellationToken);
 
-    public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default)
-        => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
-           .Where(predicate)
-           .ToListAsync(cancellationToken);
+    public async Task<(IEnumerable<T> Items, int TotalCount)> GetAllAsync(
+        Expression<Func<T, bool>> predicate,
+        int? pageNumber = null,
+        int? pageSize = null,
+        bool isTracked = false,
+        CancellationToken cancellationToken = default)
+    {
+        var query = (isTracked ? _dbSet : _dbSet.AsNoTracking()).Where(predicate);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (pageNumber.HasValue && pageSize.HasValue)
+        {
+            query = query.Skip((pageNumber.Value - 1) * pageSize.Value)
+                         .Take(pageSize.Value);
+        }
+
+        var items = await query.ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 
     public void Add(T entity)
         => _dbSet.Add(entity);
