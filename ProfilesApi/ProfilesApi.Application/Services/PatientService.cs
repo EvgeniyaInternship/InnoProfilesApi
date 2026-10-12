@@ -6,6 +6,7 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -61,12 +62,33 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default)
     {
-        var patient = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Patients.Add(patient);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountPatient = await unitOfWork.Patients.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountPatient is not null)
+                throw new InvalidOperationException($"Patient with AccountId {dto.AccountId} already exists.");
 
-        return patient.ToDto();
+            if (account.Role != AccountRole.Patient)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a patient.");
+
+            var patient = dto.ToEntity();
+
+            unitOfWork.Patients.Add(patient);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return patient.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating patient.");
+        }
     }
 
     public async Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default)
@@ -85,7 +107,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating patients.");
+            throw new Exception("An error occurred while updating patient.");
         }
     }
 
@@ -112,12 +134,33 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
     {
         if (!dtos.Any()) return [];
 
-        var entities = dtos.Select(dto => dto.ToEntity());
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var accountIds = dtos.Select(x => x.AccountId);
+            var (existingPatients, _) = await unitOfWork.Patients.GetAllAsync(
+                x => accountIds.Contains(x.AccountId),
+                cancellationToken: ct);
 
-        unitOfWork.Patients.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+            if (existingPatients.Any())
+            {
+                var existingIds = existingPatients.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Patients with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
 
-        return entities.Select(patient => patient.ToDto());
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Patients.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(patient => patient.ToDto());
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating patients.");
+        }
     }
 
     public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)

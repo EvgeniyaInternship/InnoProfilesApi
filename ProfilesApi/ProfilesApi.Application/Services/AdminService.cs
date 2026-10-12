@@ -6,6 +6,7 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -61,12 +62,33 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
     public async Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default)
     {
-        var admin = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Admins.Add(admin);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountAdmin = await unitOfWork.Admins.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountAdmin is not null)
+                throw new InvalidOperationException($"Admin with AccountId {dto.AccountId} already exists.");
 
-        return admin.ToDto();
+            if (account.Role != AccountRole.Admin)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not an admin.");
+
+            var admin = dto.ToEntity();
+
+            unitOfWork.Admins.Add(admin);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return admin.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating admin.");
+        }
     }
 
     public async Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default)
@@ -85,7 +107,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating admins.");
+            throw new Exception("An error occurred while updating admin.");
         }
     }
 
@@ -105,7 +127,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing admins.");
+            throw new Exception("An error occurred while removing admin.");
         }
     }
 
@@ -113,12 +135,33 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
     {
         if (!dtos.Any()) return [];
 
-        var entities = dtos.Select(dto => dto.ToEntity());
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var accountIds = dtos.Select(x => x.AccountId);
+            var (existingAdmins, _) = await unitOfWork.Admins.GetAllAsync(
+                x => accountIds.Contains(x.AccountId),
+                cancellationToken: ct);
 
-        unitOfWork.Admins.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+            if (existingAdmins.Any())
+            {
+                var existingIds = existingAdmins.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Admins with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
 
-        return entities.Select(admin => admin.ToDto());
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Admins.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(admin => admin.ToDto());
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating admins.");
+        }
     }
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateAdminDto> dtos, CancellationToken ct = default)

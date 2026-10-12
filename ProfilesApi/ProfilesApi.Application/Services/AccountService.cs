@@ -76,7 +76,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating accounts.");
+            throw;
         }
     }
 

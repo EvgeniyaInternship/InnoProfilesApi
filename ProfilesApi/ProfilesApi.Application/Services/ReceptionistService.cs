@@ -6,6 +6,7 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -61,12 +62,33 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
     public async Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default)
     {
-        var receptionist = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Receptionists.Add(receptionist);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountReceptionist = await unitOfWork.Receptionists.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountReceptionist is not null)
+                throw new InvalidOperationException($"Receptionist with AccountId {dto.AccountId} already exists.");
 
-        return receptionist.ToDto();
+            if (account.Role != AccountRole.Receptionist)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a receptionist.");
+
+            var receptionist = dto.ToEntity();
+
+            unitOfWork.Receptionists.Add(receptionist);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return receptionist.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating receptionist.");
+        }
     }
 
     public async Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default)
@@ -84,8 +106,8 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         }
         catch
         {
-            await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while updating receptionists.");
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while updating receptionist.");
         }
     }
 
@@ -113,12 +135,33 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
     {
         if (!dtos.Any()) return [];
 
-        var entities = dtos.Select(dto => dto.ToEntity());
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var accountIds = dtos.Select(x => x.AccountId);
+            var (existingReceptionists, _) = await unitOfWork.Receptionists.GetAllAsync(
+                x => accountIds.Contains(x.AccountId),
+                cancellationToken: ct);
 
-        unitOfWork.Receptionists.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+            if (existingReceptionists.Any())
+            {
+                var existingIds = existingReceptionists.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Receptionists with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
 
-        return entities.Select(receptionist => receptionist.ToDto());
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Receptionists.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(receptionist => receptionist.ToDto());
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating receptionists.");
+        }
     }
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default)

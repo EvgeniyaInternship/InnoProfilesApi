@@ -6,6 +6,7 @@ using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -62,12 +63,33 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task<DoctorDto> CreateDoctorAsync(CreateDoctorDto dto, CancellationToken ct = default)
     {
-        var doctor = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Doctors.Add(doctor);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountDoctor = await unitOfWork.Doctors.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountDoctor is not null)
+                throw new InvalidOperationException($"Doctor with AccountId {dto.AccountId} already exists.");
 
-        return doctor.ToDto();
+            if (account.Role != AccountRole.Doctor)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a doctor.");
+
+            var doctor = dto.ToEntity();
+
+            unitOfWork.Doctors.Add(doctor);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return doctor.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating doctor.");
+        }
     }
 
     public async Task UpdateDoctorAsync(UpdateDoctorDto dto, CancellationToken ct = default)
@@ -86,7 +108,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating doctors.");
+            throw new Exception("An error occurred while updating doctor.");
         }
     }
 
@@ -107,7 +129,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing doctors.");
+            throw new Exception("An error occurred while removing doctor.");
         }
     }
 
@@ -115,12 +137,33 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
     {
         if (!dtos.Any()) return [];
 
-        var entities = dtos.Select(dto => dto.ToEntity());
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var accountIds = dtos.Select(x => x.AccountId);
+            var (existingDoctors, _) = await unitOfWork.Doctors.GetAllAsync(
+                x => accountIds.Contains(x.AccountId),
+                cancellationToken: ct);
 
-        unitOfWork.Doctors.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
+            if (existingDoctors.Any())
+            {
+                var existingIds = existingDoctors.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Doctors with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
 
-        return entities.Select(doctor => doctor.ToDto());
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Doctors.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(doctor => doctor.ToDto());
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating doctors.");
+        }
     }
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateDoctorDto> dtos, CancellationToken ct = default)
