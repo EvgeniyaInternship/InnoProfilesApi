@@ -42,23 +42,23 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         return doctor.ToDto();
     }
 
-    public async Task<PagedResult<DoctorDto>> GetDoctorsAsync(
+    public async Task<PagedResultDto<DoctorDto>> GetDoctorsAsync(
+        PaginationParamsDto paginationParams,
         DoctorFilterDto? filter,
-        PaginationParams paginationParams,
         CancellationToken ct = default)
     {
-        paginationParams ??= new PaginationParams();
         var filterExpression = BuildFilterExpression(filter);
 
-        var (doctors, totalCount) = await unitOfWork.Doctors.GetAllAsync(
-            filterExpression,
-            paginationParams.PageNumber,
-            paginationParams.PageSize,
+        var doctors = await unitOfWork.Doctors.GetAllAsync(
+            filterExpression, 
+            paginationParams.PageNumber, 
+            paginationParams.PageSize, 
             cancellationToken: ct);
+        var totalCount = await unitOfWork.Doctors.CountAsync(filterExpression, cancellationToken: ct);
 
         var dtos = doctors.Select(doctor => doctor.ToDto());
 
-        return new PagedResult<DoctorDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<DoctorDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<DoctorDto> CreateDoctorAsync(CreateDoctorDto dto, CancellationToken ct = default)
@@ -141,7 +141,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         try
         {
             var accountIds = dtos.Select(x => x.AccountId);
-            var (existingDoctors, _) = await unitOfWork.Doctors.GetAllAsync(
+            var existingDoctors = await unitOfWork.Doctors.GetAllAsync(
                 x => accountIds.Contains(x.AccountId),
                 cancellationToken: ct);
 
@@ -176,10 +176,9 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         {
             var ids = uniqueDtos.Select(d => d.Id).ToList();
 
-            var (existingDoctors, _) = await unitOfWork.Doctors.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingDoctors.ToList();
+            var existingDoctors = await unitOfWork.Doctors.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != uniqueDtos.Count)
+            if (existingDoctors.Count() != uniqueDtos.Count)
                 throw new KeyNotFoundException("One or more doctors were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -203,13 +202,12 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var (existingDoctors, _) = await unitOfWork.Doctors.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingDoctors.ToList();
+            var existingDoctors = await unitOfWork.Doctors.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != distinctIds.Count)
+            if (existingDoctors.Count() != distinctIds.Count)
                 throw new KeyNotFoundException("One or more doctors were not found.");
 
-            unitOfWork.Doctors.RemoveRange(existingList);
+            unitOfWork.Doctors.RemoveRange(existingDoctors);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

@@ -9,7 +9,10 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IAccountService
 {
     Task<AccountDto> GetAccountByIdAsync(Guid id, CancellationToken ct = default);
-    Task<PagedResult<AccountDto>> GetAccountsAsync(AccountFilterDto? filter, PaginationParams paginationParams, CancellationToken ct = default);
+    Task<PagedResultDto<AccountDto>> GetAccountsAsync(
+        PaginationParamsDto paginationParams, 
+        AccountFilterDto? filter = null, 
+        CancellationToken ct = default);
     Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default);
     Task UpdateAccountAsync(UpdateAccountDto dto, CancellationToken ct = default);
     Task RemoveAccountAsync(Guid id, CancellationToken ct = default);

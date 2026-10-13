@@ -25,7 +25,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
         var doctors = await doctorService.GetDoctorsAsync(filter, paginationParams, cancellationToken);
         return Ok(doctors);

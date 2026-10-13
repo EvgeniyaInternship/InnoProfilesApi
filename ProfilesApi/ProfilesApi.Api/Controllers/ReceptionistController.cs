@@ -25,7 +25,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
         var receptionists = await receptionistService.GetReceptionistsAsync(filter, paginationParams, cancellationToken);
         return Ok(receptionists);

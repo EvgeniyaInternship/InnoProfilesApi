@@ -41,23 +41,23 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         return admin.ToDto();
     }
 
-    public async Task<PagedResult<AdminDto>> GetAdminsAsync(
-        AdminFilterDto? filter,
-        PaginationParams paginationParams,
+    public async Task<PagedResultDto<AdminDto>> GetAdminsAsync(
+        PaginationParamsDto paginationParams,
+        AdminFilterDto? filter = null,
         CancellationToken ct = default)
     {
-        paginationParams ??= new PaginationParams();
         var filterExpression = BuildFilterExpression(filter);
 
-        var (admins, totalCount) = await unitOfWork.Admins.GetAllAsync(
-            filterExpression,
-            paginationParams.PageNumber,
-            paginationParams.PageSize,
+        var admins = await unitOfWork.Admins.GetAllAsync(
+            filterExpression, 
+            paginationParams.PageNumber, 
+            paginationParams.PageSize, 
             cancellationToken: ct);
+        var totalCount = await unitOfWork.Admins.CountAsync(filterExpression, cancellationToken: ct);
 
         var dtos = admins.Select(admin => admin.ToDto());
 
-        return new PagedResult<AdminDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<AdminDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default)
@@ -139,9 +139,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         try
         {
             var accountIds = dtos.Select(x => x.AccountId);
-            var (existingAdmins, _) = await unitOfWork.Admins.GetAllAsync(
-                x => accountIds.Contains(x.AccountId),
-                cancellationToken: ct);
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => accountIds.Contains(x.AccountId), cancellationToken: ct);
 
             if (existingAdmins.Any())
             {
@@ -174,10 +172,9 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         {
             var ids = uniqueDtos.Select(d => d.Id).ToList();
 
-            var (existingAdmins, _) = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingAdmins.ToList();
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != uniqueDtos.Count)
+            if (existingAdmins.Count() != uniqueDtos.Count)
                 throw new KeyNotFoundException("One or more admins were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -201,13 +198,12 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var (existingAdmins, _) = await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingAdmins.ToList();
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != distinctIds.Count)
+            if (existingAdmins.Count() != distinctIds.Count)
                 throw new KeyNotFoundException("One or more admins were not found.");
 
-            unitOfWork.Admins.RemoveRange(existingList);
+            unitOfWork.Admins.RemoveRange(existingAdmins);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

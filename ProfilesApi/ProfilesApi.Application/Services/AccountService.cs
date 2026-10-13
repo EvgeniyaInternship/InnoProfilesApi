@@ -37,23 +37,23 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         return account.ToDto();
     }
 
-    public async Task<PagedResult<AccountDto>> GetAccountsAsync(
-        AccountFilterDto? filter,
-        PaginationParams paginationParams,
+    public async Task<PagedResultDto<AccountDto>> GetAccountsAsync(
+        PaginationParamsDto paginationParams,
+        AccountFilterDto? filter = null,
         CancellationToken ct = default)
     {
-        paginationParams ??= new PaginationParams();
         var filterExpression = BuildFilterExpression(filter);
 
-        var (accounts, totalCount) = await unitOfWork.Accounts.GetAllAsync(
-            filterExpression,
-            paginationParams.PageNumber,
-            paginationParams.PageSize,
+        var accounts = await unitOfWork.Accounts.GetAllAsync(
+            filterExpression, 
+            paginationParams.PageNumber, 
+            paginationParams.PageSize, 
             cancellationToken: ct);
+        var totalCount = await unitOfWork.Accounts.CountAsync(filterExpression, cancellationToken: ct);
 
         var dtos = accounts.Select(account => account.ToDto());
 
-        return new PagedResult<AccountDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<AccountDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default)
@@ -76,7 +76,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw;
+            throw new Exception("An error occurred while creating account.");
         }
     }
 
@@ -130,7 +130,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             var emails = dtos.Select(x => x.Email).ToHashSet();
             var phones = dtos.Select(x => x.PhoneNumber).ToHashSet();
 
-            var (existingAccounts, _) = await unitOfWork.Accounts.GetAllAsync(
+            var existingAccounts = await unitOfWork.Accounts.GetAllAsync(
                 x => emails.Contains(x.Email) || phones.Contains(x.PhoneNumber),
                 cancellationToken: ct
             );
@@ -163,10 +163,9 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
             var ids = uniqueDtos.Select(d => d.Id).ToList();
 
-            var (existingAccounts, _) = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingAccounts.ToList();
+            var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != uniqueDtos.Count)
+            if (existingAccounts.Count() != uniqueDtos.Count)
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -190,13 +189,12 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var (existingAccounts, _) = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingAccounts.ToList();
+            var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != distinctIds.Count)
+            if (existingAccounts.Count() != distinctIds.Count)
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
-            unitOfWork.Accounts.RemoveRange(existingList);
+            unitOfWork.Accounts.RemoveRange(existingAccounts);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

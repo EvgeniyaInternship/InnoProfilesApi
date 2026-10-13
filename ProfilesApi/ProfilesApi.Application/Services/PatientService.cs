@@ -41,23 +41,23 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         return patient.ToDto();
     }
 
-    public async Task<PagedResult<PatientDto>> GetPatientsAsync(
+    public async Task<PagedResultDto<PatientDto>> GetPatientsAsync(
+        PaginationParamsDto paginationParams,
         PatientFilterDto? filter,
-        PaginationParams paginationParams,
         CancellationToken ct = default)
     {
-        paginationParams ??= new PaginationParams();
         var filterExpression = BuildFilterExpression(filter);
 
-        var (patients, totalCount) = await unitOfWork.Patients.GetAllAsync(
+        var patients = await unitOfWork.Patients.GetAllAsync(
             filterExpression,
             paginationParams.PageNumber,
             paginationParams.PageSize,
             cancellationToken: ct);
+        var totalCount = await unitOfWork.Patients.CountAsync(filterExpression, cancellationToken: ct);
 
         var dtos = patients.Select(patient => patient.ToDto());
 
-        return new PagedResult<PatientDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<PatientDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default)
@@ -138,7 +138,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         try
         {
             var accountIds = dtos.Select(x => x.AccountId);
-            var (existingPatients, _) = await unitOfWork.Patients.GetAllAsync(
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(
                 x => accountIds.Contains(x.AccountId),
                 cancellationToken: ct);
 
@@ -173,10 +173,9 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         {
             var ids = uniqueDtos.Select(d => d.Id).ToList();
 
-            var (existingPatients, _) = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingPatients.ToList();
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != uniqueDtos.Count)
+            if (existingPatients.Count() != uniqueDtos.Count)
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -200,7 +199,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var (existingPatients, _) = await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
             var existingList = existingPatients.ToList();
 
             if (existingList.Count != distinctIds.Count)

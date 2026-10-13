@@ -9,9 +9,9 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IAdminService
 {
     Task<AdminDto> GetAdminByIdAsync(Guid id, CancellationToken ct = default);
-    Task<PagedResult<AdminDto>> GetAdminsAsync(
-        AdminFilterDto? filter,
-        PaginationParams paginationParams,
+    Task<PagedResultDto<AdminDto>> GetAdminsAsync(
+        PaginationParamsDto paginationParams,
+        AdminFilterDto? filter = null,
         CancellationToken ct = default);
     Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default);
     Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default);

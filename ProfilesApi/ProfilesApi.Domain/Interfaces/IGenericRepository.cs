@@ -5,11 +5,12 @@ namespace ProfilesApi.Domain.Interfaces;
 
 public interface IGenericRepository<T> where T : BaseEntity
 {
+    Task<int> CountAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<T?> GetAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default);
-    Task<(IEnumerable<T> Items, int TotalCount)> GetAllAsync(
+    Task<IEnumerable<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
-        int? pageNumber = null,
-        int? pageSize = null,
+        int pageNumber = 0,
+        int pageSize = 10,
         bool isTracked = false,
         CancellationToken cancellationToken = default);
     void Add(T entity);

@@ -9,9 +9,9 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IReceptionistService
 {
     Task<ReceptionistDto> GetReceptionistByIdAsync(Guid id, CancellationToken ct = default);
-    Task<PagedResult<ReceptionistDto>> GetReceptionistsAsync(
-        ReceptionistFilterDto? filter,
-        PaginationParams paginationParams,
+    Task<PagedResultDto<ReceptionistDto>> GetReceptionistsAsync(
+        PaginationParamsDto paginationParams,
+        ReceptionistFilterDto? filter = null,
         CancellationToken ct = default);
     Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default);
     Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default);

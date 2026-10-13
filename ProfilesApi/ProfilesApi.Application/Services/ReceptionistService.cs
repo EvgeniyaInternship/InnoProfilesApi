@@ -41,23 +41,23 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         return receptionist.ToDto();
     }
 
-    public async Task<PagedResult<ReceptionistDto>> GetReceptionistsAsync(
-        ReceptionistFilterDto? filter,
-        PaginationParams paginationParams,
+    public async Task<PagedResultDto<ReceptionistDto>> GetReceptionistsAsync(
+        PaginationParamsDto paginationParams,
+        ReceptionistFilterDto? filter = null,
         CancellationToken ct = default)
     {
-        paginationParams ??= new PaginationParams();
         var filterExpression = BuildFilterExpression(filter);
 
-        var (receptionists, totalCount) = await unitOfWork.Receptionists.GetAllAsync(
+        var receptionists = await unitOfWork.Receptionists.GetAllAsync(
             filterExpression,
             paginationParams.PageNumber,
             paginationParams.PageSize,
             cancellationToken: ct);
+        var totalCount = await unitOfWork.Receptionists.CountAsync(filterExpression, cancellationToken: ct);
 
         var dtos = receptionists.Select(receptionist => receptionist.ToDto());
 
-        return new PagedResult<ReceptionistDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<ReceptionistDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default)
@@ -139,7 +139,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         try
         {
             var accountIds = dtos.Select(x => x.AccountId);
-            var (existingReceptionists, _) = await unitOfWork.Receptionists.GetAllAsync(
+            var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(
                 x => accountIds.Contains(x.AccountId),
                 cancellationToken: ct);
 
@@ -174,10 +174,9 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         {
             var ids = uniqueDtos.Select(d => d.Id).ToList();
 
-            var (existingReceptionists, _) = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingReceptionists.ToList();
+            var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != uniqueDtos.Count)
+            if (existingReceptionists.Count() != uniqueDtos.Count)
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -201,13 +200,12 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var (existingReceptionists, _) = await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingReceptionists.ToList();
+            var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingList.Count != distinctIds.Count)
+            if (existingReceptionists.Count() != distinctIds.Count)
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
-            unitOfWork.Receptionists.RemoveRange(existingList);
+            unitOfWork.Receptionists.RemoveRange(existingReceptionists);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
