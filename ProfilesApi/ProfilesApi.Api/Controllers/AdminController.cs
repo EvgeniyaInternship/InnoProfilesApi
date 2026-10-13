@@ -27,7 +27,7 @@ public sealed class AdminController(IAdminService adminService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAdmins([FromQuery] AdminFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
-        var admins = await adminService.GetAdminsAsync(filter, paginationParams, cancellationToken);
+        var admins = await adminService.GetAdminsAsync(paginationParams, filter, cancellationToken);
         return Ok(admins);
     }
 

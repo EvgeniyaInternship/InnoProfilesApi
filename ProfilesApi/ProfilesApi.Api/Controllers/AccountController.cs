@@ -27,7 +27,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAccounts([FromQuery] AccountFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
-        var pagedAccounts = await accountService.GetAccountsAsync(filter, paginationParams, cancellationToken);
+        var pagedAccounts = await accountService.GetAccountsAsync(paginationParams, filter, cancellationToken);
         return Ok(pagedAccounts);
     }
 

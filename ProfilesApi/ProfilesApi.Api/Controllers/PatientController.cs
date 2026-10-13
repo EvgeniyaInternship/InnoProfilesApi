@@ -25,7 +25,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
     [ProducesResponseType(typeof(IEnumerable<PatientDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPatients([FromQuery] PatientFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
-        var patients = await patientService.GetPatientsAsync(filter, paginationParams, cancellationToken);
+        var patients = await patientService.GetPatientsAsync(paginationParams, filter, cancellationToken);
         return Ok(patients);
     }
 
