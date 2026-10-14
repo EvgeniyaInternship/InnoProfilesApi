@@ -8,6 +8,7 @@ using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
+using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -87,10 +88,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
             return doctor.ToDto();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating doctor.");
+            throw new ServerException("An error occurred while creating doctor.");
         }
     }
 
@@ -107,10 +108,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating doctor.");
+            throw new ServerException("An error occurred while updating doctor.");
         }
     }
 
@@ -128,10 +129,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing doctor.");
+            throw new ServerException("An error occurred while removing doctor.");
         }
     }
 
@@ -161,10 +162,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
             return entities.Select(doctor => doctor.ToDto()).ToList();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating doctors.");
+            throw new ServerException("An error occurred while creating doctors.");
         }
     }
 
@@ -189,10 +190,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while updating doctors.");
+            throw new ServerException("An error occurred while updating doctors.");
         }
     }
 
@@ -213,10 +214,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while removing doctors.");
+            throw new ServerException("An error occurred while removing doctors.");
         }
     }
 }
