@@ -36,21 +36,24 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
+        var path = Sanitize(httpContext.Request.Path.Value);
+        var method = Sanitize(httpContext.Request.Method);
+
         if (statusCode == StatusCodes.Status500InternalServerError)
         {
             logger.LogError(
                 exception,
                 "Unhandled server exception | Method: {Method} | Path: {Path} | Status: {StatusCode}",
-                httpContext.Request.Method,
-                httpContext.Request.Path,
+                method,
+                path,
                 statusCode);
         }
         else
         {
             logger.LogWarning(
                 "Client error encountered | Method: {Method} | Path: {Path} | Status: {StatusCode} | Message: {Message}",
-                httpContext.Request.Method,
-                httpContext.Request.Path,
+                method,
+                path,
                 statusCode,
                 exception.Message);
         }
@@ -82,5 +85,13 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         await httpContext.Response.WriteAsJsonAsync(problemDetails, jsonOptions, cancellationToken);
 
         return true;
+    }
+
+    private static string Sanitize(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        return input.Replace("\r", string.Empty).Replace("\n", string.Empty);
     }
 }
