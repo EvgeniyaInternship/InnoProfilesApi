@@ -167,7 +167,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAccounts.Count() != uniqueDtos.Count())
+            if (existingAccounts.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -193,7 +193,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         {
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAccounts.Count() != distinctIds.Count())
+            if (existingAccounts.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             unitOfWork.Accounts.RemoveRange(existingAccounts);

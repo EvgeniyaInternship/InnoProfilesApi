@@ -178,7 +178,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingReceptionists.Count() != uniqueDtos.Count())
+            if (existingReceptionists.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -204,7 +204,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         {
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingReceptionists.Count() != distinctIds.Count())
+            if (existingReceptionists.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
             unitOfWork.Receptionists.RemoveRange(existingReceptionists);

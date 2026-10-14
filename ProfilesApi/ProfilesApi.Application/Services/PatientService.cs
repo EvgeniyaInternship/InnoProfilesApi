@@ -177,7 +177,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
             var existingPatients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingPatients.Count() != uniqueDtos.Count())
+            if (existingPatients.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -203,7 +203,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         {
             var existingPatients = await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingPatients.Count() != distinctIds.Count())
+            if (existingPatients.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             unitOfWork.Patients.RemoveRange(existingPatients);

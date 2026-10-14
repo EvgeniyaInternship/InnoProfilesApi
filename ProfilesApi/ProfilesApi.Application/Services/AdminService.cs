@@ -176,7 +176,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
             var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAdmins.Count() != uniqueDtos.Count())
+            if (existingAdmins.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more admins were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -202,7 +202,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         {
             var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAdmins.Count() != distinctIds.Count())
+            if (existingAdmins.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more admins were not found.");
 
             unitOfWork.Admins.RemoveRange(existingAdmins);
