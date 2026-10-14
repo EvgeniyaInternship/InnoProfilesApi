@@ -3,6 +3,7 @@ using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
@@ -54,7 +55,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             paginationParams.PageSize, 
             cancellationToken: ct);
         var totalCount = await unitOfWork.Admins.CountAsync(filterExpression, cancellationToken: ct);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
         var dtos = admins.Select(admin => admin.ToDto());
 

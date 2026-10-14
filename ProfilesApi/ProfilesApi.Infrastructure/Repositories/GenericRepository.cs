@@ -25,7 +25,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     public async Task<IEnumerable<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
         int pageNumber = 0,
-        int pageSize = 10,
+        int pageSize = 0,
         bool isTracked = false,
         CancellationToken cancellationToken = default)
     {

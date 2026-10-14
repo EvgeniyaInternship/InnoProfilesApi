@@ -3,6 +3,7 @@ using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
@@ -43,7 +44,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task<PagedResultDto<PatientDto>> GetPatientsAsync(
         PaginationParamsDto paginationParams,
-        PatientFilterDto? filter,
+        PatientFilterDto? filter = null,
         CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
@@ -54,7 +55,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             paginationParams.PageSize,
             cancellationToken: ct);
         var totalCount = await unitOfWork.Patients.CountAsync(filterExpression, cancellationToken: ct);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
         var dtos = patients.Select(patient => patient.ToDto());
 

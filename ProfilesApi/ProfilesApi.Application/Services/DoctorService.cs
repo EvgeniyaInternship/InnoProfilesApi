@@ -3,6 +3,7 @@ using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
@@ -44,7 +45,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task<PagedResultDto<DoctorDto>> GetDoctorsAsync(
         PaginationParamsDto paginationParams,
-        DoctorFilterDto? filter,
+        DoctorFilterDto? filter = null,
         CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
@@ -55,7 +56,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             paginationParams.PageSize, 
             cancellationToken: ct);
         var totalCount = await unitOfWork.Doctors.CountAsync(filterExpression, cancellationToken: ct);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
         var dtos = doctors.Select(doctor => doctor.ToDto());
 
