@@ -167,17 +167,17 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        if (uniqueDtos.Count == 0) return;
+        var uniqueDtos = dtos.DistinctBy(d => d.Id);
+        if (uniqueDtos.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var ids = uniqueDtos.Select(d => d.Id);
 
             var existingPatients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingPatients.Count() != uniqueDtos.Count)
+            if (existingPatients.Count() != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -195,19 +195,18 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
             var existingPatients = await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
-            var existingList = existingPatients.ToList();
 
-            if (existingList.Count != distinctIds.Count)
+            if (existingPatients.Count() != distinctIds.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
-            unitOfWork.Patients.RemoveRange(existingList);
+            unitOfWork.Patients.RemoveRange(existingPatients);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

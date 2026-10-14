@@ -162,12 +162,12 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var uniqueDtos = dtos.DistinctBy(d => d.Id);
+            var ids = uniqueDtos.Select(d => d.Id);
 
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAccounts.Count() != uniqueDtos.Count)
+            if (existingAccounts.Count() != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -185,15 +185,15 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAccounts.Count() != distinctIds.Count)
+            if (existingAccounts.Count() != distinctIds.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             unitOfWork.Accounts.RemoveRange(existingAccounts);

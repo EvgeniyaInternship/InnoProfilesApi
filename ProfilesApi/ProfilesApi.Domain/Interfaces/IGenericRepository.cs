@@ -10,7 +10,7 @@ public interface IGenericRepository<T> where T : BaseEntity
     Task<IEnumerable<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
         int pageNumber = 0,
-        int pageSize = 10,
+        int pageSize = 0,
         bool isTracked = false,
         CancellationToken cancellationToken = default);
     void Add(T entity);

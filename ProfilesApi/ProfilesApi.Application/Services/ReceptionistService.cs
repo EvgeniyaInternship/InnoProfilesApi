@@ -168,17 +168,17 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
     public async Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default)
     {
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        if (uniqueDtos.Count == 0) return;
+        var uniqueDtos = dtos.DistinctBy(d => d.Id);
+        if (uniqueDtos.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var ids = uniqueDtos.Select(d => d.Id);
 
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
-            if (existingReceptionists.Count() != uniqueDtos.Count)
+            if (existingReceptionists.Count() != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -196,15 +196,15 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
     public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingReceptionists.Count() != distinctIds.Count)
+            if (existingReceptionists.Count() != distinctIds.Count())
                 throw new KeyNotFoundException("One or more receptionists were not found.");
 
             unitOfWork.Receptionists.RemoveRange(existingReceptionists);
