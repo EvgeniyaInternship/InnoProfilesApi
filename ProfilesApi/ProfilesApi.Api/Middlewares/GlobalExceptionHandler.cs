@@ -26,9 +26,6 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             KeyNotFoundException =>
                 (StatusCodes.Status404NotFound, "Resource Not Found"),
 
-            IAmATeapotException =>
-                (StatusCodes.Status418ImATeapot, "I'm a Teapot (рэспект)"),
-
             ServerException =>
                 (StatusCodes.Status500InternalServerError, "Internal Server Error"),
 
