@@ -8,6 +8,7 @@ using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
+using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -86,10 +87,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
             return admin.ToDto();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating admin.");
+            throw new ServerException("An error occurred while creating admin.");
         }
     }
 
@@ -106,10 +107,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating admin.");
+            throw new ServerException("An error occurred while updating admin.");
         }
     }
 
@@ -126,10 +127,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing admin.");
+            throw new ServerException("An error occurred while removing admin.");
         }
     }
 
@@ -157,10 +158,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
             return entities.Select(admin => admin.ToDto()).ToList();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating admins.");
+            throw new ServerException("An error occurred while creating admins.");
         }
     }
 
@@ -185,10 +186,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while updating admins.");
+            throw new ServerException("An error occurred while updating admins.");
         }
     }
 
@@ -209,10 +210,10 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while removing admins.");
+            throw new ServerException("An error occurred while removing admins.");
         }
     }
 }

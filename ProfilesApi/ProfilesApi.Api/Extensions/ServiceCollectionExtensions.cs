@@ -1,4 +1,5 @@
-﻿using ProfilesApi.Application;
+﻿using ProfilesApi.Api.Middlewares;
+using ProfilesApi.Application;
 using ProfilesApi.Infrastructure;
 
 namespace ProfilesApi.Api.Extensions;
@@ -28,6 +29,14 @@ public static class ServiceCollectionExtensions
         {
             options.SwaggerDoc("v1", new() { Title = "Profiles API", Version = "v1" });
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddExceptionHandler(this IServiceCollection services)
+    {
+        services.AddProblemDetails();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
 
         return services;
     }

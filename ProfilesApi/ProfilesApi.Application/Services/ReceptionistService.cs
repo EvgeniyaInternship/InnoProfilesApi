@@ -8,6 +8,7 @@ using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
+using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -86,10 +87,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
             return receptionist.ToDto();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating receptionist.");
+            throw new ServerException("An error occurred while creating receptionist.");
         }
     }
 
@@ -106,10 +107,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating receptionist.");
+            throw new ServerException("An error occurred while updating receptionist.");
         }
     }
 
@@ -126,10 +127,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while removing receptionists.");
+            throw new ServerException("An error occurred while removing receptionists.");
         }
     }
 
@@ -159,10 +160,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
             return entities.Select(receptionist => receptionist.ToDto()).ToList();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating receptionists.");
+            throw new ServerException("An error occurred while creating receptionists.");
         }
     }
 
@@ -187,10 +188,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while updating receptionists.");
+            throw new ServerException("An error occurred while updating receptionists.");
         }
     }
 
@@ -211,10 +212,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(ct);
-            throw new Exception("An error occurred while removing receptionists.");
+            throw new ServerException("An error occurred while removing receptionists.");
         }
     }
 }

@@ -6,9 +6,11 @@ builder.Services.AddLayerServices(builder.Configuration);
 
 builder.Services.AddApiControllers();
 builder.Services.AddSwaggerDocumentation();
+builder.Services.AddExceptionHandler();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
 app.UseSwaggerDocumentation();
 app.UseApiMiddlewares();
 
