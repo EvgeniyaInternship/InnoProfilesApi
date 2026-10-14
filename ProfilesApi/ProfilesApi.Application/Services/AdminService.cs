@@ -1,10 +1,13 @@
-﻿using ProfilesApi.Application.DTOs.Filters;
+﻿using ProfilesApi.Application.DTOs.Common;
+using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -39,23 +42,55 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         return admin.ToDto();
     }
 
-    public async Task<IEnumerable<AdminDto>> GetAdminsAsync(AdminFilterDto? filter = null, CancellationToken ct = default)
+    public async Task<PagedResultDto<AdminDto>> GetAdminsAsync(
+        PaginationParamsDto paginationParams,
+        AdminFilterDto? filter = null,
+        CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
 
-        var admins = await unitOfWork.Admins.GetAllAsync(filterExpression, cancellationToken: ct);
+        var admins = await unitOfWork.Admins.GetAllAsync(
+            filterExpression, 
+            paginationParams.PageNumber, 
+            paginationParams.PageSize, 
+            cancellationToken: ct);
+        var totalCount = await unitOfWork.Admins.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        return admins.Select(admin => admin.ToDto());
+        var dtos = admins.Select(admin => admin.ToDto()).ToList();
+
+        return new PagedResultDto<AdminDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default)
     {
-        var admin = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Admins.Add(admin);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountAdmin = await unitOfWork.Admins.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountAdmin is not null)
+                throw new InvalidOperationException($"Admin with AccountId {dto.AccountId} already exists.");
 
-        return admin.ToDto();
+            if (account.Role != AccountRole.Admin)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not an admin.");
+
+            var admin = dto.ToEntity();
+
+            unitOfWork.Admins.Add(admin);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return admin.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating admin.");
+        }
     }
 
     public async Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default)
@@ -74,7 +109,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating admins.");
+            throw new Exception("An error occurred while updating admin.");
         }
     }
 
@@ -94,34 +129,54 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing admins.");
+            throw new Exception("An error occurred while removing admin.");
         }
     }
 
-    public async Task<IEnumerable<AdminDto>> CreateRangeAsync(IEnumerable<CreateAdminDto> dtos, CancellationToken ct = default)
+    public async Task<List<AdminDto>> CreateRangeAsync(List<CreateAdminDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
-
-        var entities = dtos.Select(dto => dto.ToEntity());
-
-        unitOfWork.Admins.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
-
-        return entities.Select(admin => admin.ToDto());
-    }
-
-    public async Task UpdateRangeAsync(IEnumerable<UpdateAdminDto> dtos, CancellationToken ct = default)
-    {
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        if (uniqueDtos.Count == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var accountIds = dtos.Select(x => x.AccountId);
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => accountIds.Contains(x.AccountId), cancellationToken: ct);
 
-            var existingAdmins = (await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
-            if (existingAdmins.Count != uniqueDtos.Count)
+            if (existingAdmins.Any())
+            {
+                var existingIds = existingAdmins.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Admins with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
+
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Admins.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(admin => admin.ToDto()).ToList();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating admins.");
+        }
+    }
+
+    public async Task UpdateRangeAsync(List<UpdateAdminDto> dtos, CancellationToken ct = default)
+    {
+        var uniqueDtos = dtos.DistinctBy(d => d.Id);
+        if (uniqueDtos.Count() == 0) return;
+
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var ids = uniqueDtos.Select(d => d.Id);
+
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+
+            if (existingAdmins.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more admins were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -137,17 +192,17 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var existingAdmins = (await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+            var existingAdmins = await unitOfWork.Admins.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAdmins.Count != distinctIds.Count)
+            if (existingAdmins.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more admins were not found.");
 
             unitOfWork.Admins.RemoveRange(existingAdmins);

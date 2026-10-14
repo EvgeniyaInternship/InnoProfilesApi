@@ -1,10 +1,13 @@
-﻿using ProfilesApi.Application.DTOs.Filters;
+﻿using ProfilesApi.Application.DTOs.Common;
+using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -39,23 +42,55 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         return patient.ToDto();
     }
 
-    public async Task<IEnumerable<PatientDto>> GetPatientsAsync(PatientFilterDto? filter = null, CancellationToken ct = default)
+    public async Task<PagedResultDto<PatientDto>> GetPatientsAsync(
+        PaginationParamsDto paginationParams,
+        PatientFilterDto? filter = null,
+        CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
 
-        var patients = await unitOfWork.Patients.GetAllAsync(filterExpression, cancellationToken: ct);
+        var patients = await unitOfWork.Patients.GetAllAsync(
+            filterExpression,
+            paginationParams.PageNumber,
+            paginationParams.PageSize,
+            cancellationToken: ct);
+        var totalCount = await unitOfWork.Patients.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        return patients.Select(patient => patient.ToDto());
+        var dtos = patients.Select(patient => patient.ToDto()).ToList();
+
+        return new PagedResultDto<PatientDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default)
     {
-        var patient = dto.ToEntity();
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
+            if (account is null)
+                throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
 
-        unitOfWork.Patients.Add(patient);
-        await unitOfWork.SaveChangesAsync(ct);
+            var existingAccountPatient = await unitOfWork.Patients.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
+            if (existingAccountPatient is not null)
+                throw new InvalidOperationException($"Patient with AccountId {dto.AccountId} already exists.");
 
-        return patient.ToDto();
+            if (account.Role != AccountRole.Patient)
+                throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a patient.");
+
+            var patient = dto.ToEntity();
+
+            unitOfWork.Patients.Add(patient);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return patient.ToDto();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating patient.");
+        }
     }
 
     public async Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default)
@@ -74,7 +109,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating patients.");
+            throw new Exception("An error occurred while updating patient.");
         }
     }
 
@@ -97,30 +132,52 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task<IEnumerable<PatientDto>> CreateRangeAsync(IEnumerable<CreatePatientDto> dtos, CancellationToken ct = default)
+    public async Task<List<PatientDto>> CreateRangeAsync(List<CreatePatientDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
-
-        var entities = dtos.Select(dto => dto.ToEntity());
-
-        unitOfWork.Patients.AddRange(entities);
-        await unitOfWork.SaveChangesAsync(ct);
-
-        return entities.Select(patient => patient.ToDto());
-    }
-
-    public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
-    {
-        var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-        if (uniqueDtos.Count == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var accountIds = dtos.Select(x => x.AccountId);
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(
+                x => accountIds.Contains(x.AccountId),
+                cancellationToken: ct);
 
-            var existingPatients = (await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
-            if (existingPatients.Count != uniqueDtos.Count)
+            if (existingPatients.Any())
+            {
+                var existingIds = existingPatients.Select(a => a.AccountId);
+                throw new InvalidOperationException($"Patients with AccountIds already exist: {string.Join(", ", existingIds)}");
+            }
+
+            var entities = dtos.Select(dto => dto.ToEntity());
+
+            unitOfWork.Patients.AddRange(entities);
+            await unitOfWork.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            return entities.Select(patient => patient.ToDto()).ToList();
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken: ct);
+            throw new Exception("An error occurred while creating patients.");
+        }
+    }
+
+    public async Task UpdateRangeAsync(List<UpdatePatientDto> dtos, CancellationToken ct = default)
+    {
+        var uniqueDtos = dtos.DistinctBy(d => d.Id);
+        if (uniqueDtos.Count() == 0) return;
+
+        using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
+        try
+        {
+            var ids = uniqueDtos.Select(d => d.Id);
+
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+
+            if (existingPatients.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -136,17 +193,17 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var existingPatients = (await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+            var existingPatients = await unitOfWork.Patients.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingPatients.Count != distinctIds.Count)
+            if (existingPatients.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more patients were not found.");
 
             unitOfWork.Patients.RemoveRange(existingPatients);

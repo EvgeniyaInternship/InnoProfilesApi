@@ -1,6 +1,6 @@
 ﻿namespace ProfilesApi.Application.DTOs.Filters;
 
-public record PatientFilterDto(
+public sealed record PatientFilterDto(
     string? InsuranceNumber,
     string? FirstName,
     string? LastName,

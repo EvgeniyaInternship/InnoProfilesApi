@@ -26,6 +26,7 @@ public static class AccountMappingExtensions
         {
             PhoneNumber = dto.PhoneNumber,
             Email = dto.Email,
+            HashedPassword = dto.PasswordHash,
             Role = dto.Role,
             PhotoId = dto.PhotoId,
         };

@@ -1,7 +1,9 @@
-﻿using ProfilesApi.Application.DTOs.Filters;
+﻿using ProfilesApi.Application.DTOs.Common;
+using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
+using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
@@ -36,13 +38,24 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         return account.ToDto();
     }
 
-    public async Task<IEnumerable<AccountDto>> GetAccountsAsync(AccountFilterDto? filter = null, CancellationToken ct = default)
+    public async Task<PagedResultDto<AccountDto>> GetAccountsAsync(
+        PaginationParamsDto paginationParams,
+        AccountFilterDto? filter = null,
+        CancellationToken ct = default)
     {
         var filterExpression = BuildFilterExpression(filter);
 
-        var accounts = await unitOfWork.Accounts.GetAllAsync(filterExpression, cancellationToken: ct);
+        var accounts = await unitOfWork.Accounts.GetAllAsync(
+            filterExpression, 
+            paginationParams.PageNumber, 
+            paginationParams.PageSize, 
+            cancellationToken: ct);
+        var totalCount = await unitOfWork.Accounts.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        return accounts.Select(account => account.ToDto());
+        var dtos = accounts.Select(account => account.ToDto()).ToList();
+
+        return new PagedResultDto<AccountDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default)
@@ -65,7 +78,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         catch
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating accounts.");
+            throw new Exception("An error occurred while creating account.");
         }
     }
 
@@ -109,7 +122,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task<IEnumerable<AccountDto>> CreateRangeAsync(IEnumerable<CreateAccountDto> dtos, CancellationToken ct = default)
+    public async Task<List<AccountDto>> CreateRangeAsync(List<CreateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
 
@@ -133,7 +146,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(account => account.ToDto());
+            return entities.Select(account => account.ToDto()).ToList();
         }
         catch
         {
@@ -142,18 +155,19 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task UpdateRangeAsync(IEnumerable<UpdateAccountDto> dtos, CancellationToken ct = default)
+    public async Task UpdateRangeAsync(List<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var uniqueDtos = dtos.DistinctBy(d => d.Id).ToList();
-            var ids = uniqueDtos.Select(d => d.Id).ToList();
+            var uniqueDtos = dtos.DistinctBy(d => d.Id);
+            var ids = uniqueDtos.Select(d => d.Id);
 
-            var existingAccounts = (await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct)).ToList();
-            if (existingAccounts.Count != uniqueDtos.Count)
+            var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
+
+            if (existingAccounts.Count != uniqueDtos.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
@@ -169,17 +183,17 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        if (distinctIds.Count == 0) return;
+        var distinctIds = ids.Distinct();
+        if (distinctIds.Count() == 0) return;
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var existingAccounts = (await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct)).ToList();
+            var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
-            if (existingAccounts.Count != distinctIds.Count)
+            if (existingAccounts.Count != distinctIds.Count())
                 throw new KeyNotFoundException("One or more accounts were not found.");
 
             unitOfWork.Accounts.RemoveRange(existingAccounts);

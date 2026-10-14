@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -22,12 +23,12 @@ public sealed class AccountController(IAccountService accountService) : Controll
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AccountDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AccountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAccounts([FromQuery] AccountFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAccounts([FromQuery] AccountFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
-        var accounts = await accountService.GetAccountsAsync(filter, cancellationToken);
-        return Ok(accounts);
+        var pagedAccounts = await accountService.GetAccountsAsync(paginationParams, filter, cancellationToken);
+        return Ok(pagedAccounts);
     }
 
     [HttpPost]
@@ -62,10 +63,10 @@ public sealed class AccountController(IAccountService accountService) : Controll
     }
 
     [HttpPost("batch")]
-    [ProducesResponseType(typeof(IEnumerable<AccountDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AccountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreateAccountDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateRange([FromBody] List<CreateAccountDto> dtos, CancellationToken cancellationToken)
     {
         var accounts = await accountService.CreateRangeAsync(dtos, cancellationToken);
         return Ok(accounts);
@@ -76,7 +77,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdateAccountDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateRange([FromBody] List<UpdateAccountDto> dtos, CancellationToken cancellationToken)
     {
         await accountService.UpdateRangeAsync(dtos, cancellationToken);
         return NoContent();
@@ -87,7 +88,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
+    public async Task<IActionResult> RemoveRange([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
         await accountService.RemoveRangeAsync(ids, cancellationToken);
         return NoContent();

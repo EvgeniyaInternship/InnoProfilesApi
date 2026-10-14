@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
@@ -22,11 +23,11 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ReceptionistDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetReceptionists([FromQuery] ReceptionistFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
-        var receptionists = await receptionistService.GetReceptionistsAsync(filter, cancellationToken);
+        var receptionists = await receptionistService.GetReceptionistsAsync(paginationParams, filter, cancellationToken);
         return Ok(receptionists);
     }
 
@@ -62,10 +63,10 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     }
 
     [HttpPost("batch")]
-    [ProducesResponseType(typeof(IEnumerable<ReceptionistDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreateReceptionistDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateRange([FromBody] List<CreateReceptionistDto> dtos, CancellationToken cancellationToken)
     {
         var receptionists = await receptionistService.CreateRangeAsync(dtos, cancellationToken);
         return Ok(receptionists);
@@ -76,7 +77,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdateReceptionistDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateRange([FromBody] List<UpdateReceptionistDto> dtos, CancellationToken cancellationToken)
     {
         await receptionistService.UpdateRangeAsync(dtos, cancellationToken);
         return NoContent();
@@ -87,7 +88,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
+    public async Task<IActionResult> RemoveRange([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
         await receptionistService.RemoveRangeAsync(ids, cancellationToken);
         return NoContent();

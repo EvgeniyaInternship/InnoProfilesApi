@@ -1,6 +1,6 @@
 ﻿namespace ProfilesApi.Application.DTOs.Filters;
 
-public record DoctorFilterDto(
+public sealed record DoctorFilterDto(
     Guid? OfficeId = null,
     Guid? SpecializationId = null,
     DateTime? WorkStartDate = null,
