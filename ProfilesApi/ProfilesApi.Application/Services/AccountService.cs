@@ -53,7 +53,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         var totalCount = await unitOfWork.Accounts.CountAsync(filterExpression, cancellationToken: ct);
         var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        var dtos = accounts.Select(account => account.ToDto());
+        var dtos = accounts.Select(account => account.ToDto()).ToList();
 
         return new PagedResultDto<AccountDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
@@ -122,7 +122,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task<IEnumerable<AccountDto>> CreateRangeAsync(IEnumerable<CreateAccountDto> dtos, CancellationToken ct = default)
+    public async Task<List<AccountDto>> CreateRangeAsync(List<CreateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
 
@@ -146,7 +146,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(account => account.ToDto());
+            return entities.Select(account => account.ToDto()).ToList();
         }
         catch
         {
@@ -155,7 +155,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task UpdateRangeAsync(IEnumerable<UpdateAccountDto> dtos, CancellationToken ct = default)
+    public async Task UpdateRangeAsync(List<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return;
 
@@ -183,7 +183,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
         if (distinctIds.Count() == 0) return;

@@ -7,7 +7,7 @@ public interface IGenericRepository<T> where T : BaseEntity
 {
     Task<int> CountAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<T?> GetAsync(Expression<Func<T, bool>> predicate, bool isTracked = false, CancellationToken cancellationToken = default);
-    Task<IEnumerable<T>> GetAllAsync(
+    Task<List<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
         int pageNumber = 0,
         int pageSize = 0,

@@ -16,7 +16,7 @@ public interface IAdminService
     Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default);
     Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default);
     Task RemoveAdminAsync(Guid id, CancellationToken ct = default);
-    Task<IEnumerable<AdminDto>> CreateRangeAsync(IEnumerable<CreateAdminDto> dtos, CancellationToken ct = default);
-    Task UpdateRangeAsync(IEnumerable<UpdateAdminDto> dtos, CancellationToken ct = default);
-    Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
+    Task<List<AdminDto>> CreateRangeAsync(List<CreateAdminDto> dtos, CancellationToken ct = default);
+    Task UpdateRangeAsync(List<UpdateAdminDto> dtos, CancellationToken ct = default);
+    Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default);
 }

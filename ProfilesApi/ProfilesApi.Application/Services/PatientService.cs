@@ -57,7 +57,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         var totalCount = await unitOfWork.Patients.CountAsync(filterExpression, cancellationToken: ct);
         var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        var dtos = patients.Select(patient => patient.ToDto());
+        var dtos = patients.Select(patient => patient.ToDto()).ToList();
 
         return new PagedResultDto<PatientDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
@@ -132,7 +132,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task<IEnumerable<PatientDto>> CreateRangeAsync(IEnumerable<CreatePatientDto> dtos, CancellationToken ct = default)
+    public async Task<List<PatientDto>> CreateRangeAsync(List<CreatePatientDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
 
@@ -156,7 +156,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(patient => patient.ToDto());
+            return entities.Select(patient => patient.ToDto()).ToList();
         }
         catch
         {
@@ -165,7 +165,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default)
+    public async Task UpdateRangeAsync(List<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
         if (uniqueDtos.Count() == 0) return;
@@ -193,7 +193,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
         if (distinctIds.Count() == 0) return;

@@ -23,7 +23,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetDoctors([FromQuery] DoctorFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
     {
@@ -63,10 +63,10 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     }
 
     [HttpPost("batch")]
-    [ProducesResponseType(typeof(IEnumerable<DoctorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateRange([FromBody] IEnumerable<CreateDoctorDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateRange([FromBody] List<CreateDoctorDto> dtos, CancellationToken cancellationToken)
     {
         var doctors = await doctorService.CreateRangeAsync(dtos, cancellationToken);
         return Ok(doctors);
@@ -77,7 +77,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateRange([FromBody] IEnumerable<UpdateDoctorDto> dtos, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateRange([FromBody] List<UpdateDoctorDto> dtos, CancellationToken cancellationToken)
     {
         await doctorService.UpdateRangeAsync(dtos, cancellationToken);
         return NoContent();
@@ -88,7 +88,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveRange([FromBody] IEnumerable<Guid> ids, CancellationToken cancellationToken)
+    public async Task<IActionResult> RemoveRange([FromBody] List<Guid> ids, CancellationToken cancellationToken)
     {
         await doctorService.RemoveRangeAsync(ids, cancellationToken);
         return NoContent();

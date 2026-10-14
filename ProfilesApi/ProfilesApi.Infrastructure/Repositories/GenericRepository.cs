@@ -22,7 +22,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
         => await (isTracked ? _dbSet : _dbSet.AsNoTracking())
            .FirstOrDefaultAsync(predicate, cancellationToken);
 
-    public async Task<IEnumerable<T>> GetAllAsync(
+    public async Task<List<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
         int pageNumber = 0,
         int pageSize = 0,

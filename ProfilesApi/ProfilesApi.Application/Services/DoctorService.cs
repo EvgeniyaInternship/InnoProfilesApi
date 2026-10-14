@@ -58,7 +58,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         var totalCount = await unitOfWork.Doctors.CountAsync(filterExpression, cancellationToken: ct);
         var totalPages = PaginationHelper.CalculateTotalPages(totalCount, paginationParams.PageSize);
 
-        var dtos = doctors.Select(doctor => doctor.ToDto());
+        var dtos = doctors.Select(doctor => doctor.ToDto()).ToList();
 
         return new PagedResultDto<DoctorDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
@@ -135,7 +135,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         }
     }
 
-    public async Task<IEnumerable<DoctorDto>> CreateRangeAsync(IEnumerable<CreateDoctorDto> dtos, CancellationToken ct = default)
+    public async Task<List<DoctorDto>> CreateRangeAsync(List<CreateDoctorDto> dtos, CancellationToken ct = default)
     {
         if (!dtos.Any()) return [];
 
@@ -159,7 +159,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(doctor => doctor.ToDto());
+            return entities.Select(doctor => doctor.ToDto()).ToList();
         }
         catch
         {
@@ -168,7 +168,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         }
     }
 
-    public async Task UpdateRangeAsync(IEnumerable<UpdateDoctorDto> dtos, CancellationToken ct = default)
+    public async Task UpdateRangeAsync(List<UpdateDoctorDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
         if (uniqueDtos.Count() == 0) return;
@@ -196,7 +196,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         }
     }
 
-    public async Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
         if (distinctIds.Count() == 0) return;

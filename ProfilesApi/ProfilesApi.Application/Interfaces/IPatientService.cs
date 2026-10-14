@@ -16,7 +16,7 @@ public interface IPatientService
     Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default);
     Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default);
     Task RemovePatientAsync(Guid id, CancellationToken ct = default);
-    Task<IEnumerable<PatientDto>> CreateRangeAsync(IEnumerable<CreatePatientDto> dtos, CancellationToken ct = default);
-    Task UpdateRangeAsync(IEnumerable<UpdatePatientDto> dtos, CancellationToken ct = default);
-    Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
+    Task<List<PatientDto>> CreateRangeAsync(List<CreatePatientDto> dtos, CancellationToken ct = default);
+    Task UpdateRangeAsync(List<UpdatePatientDto> dtos, CancellationToken ct = default);
+    Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default);
 }

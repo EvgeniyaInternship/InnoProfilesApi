@@ -16,7 +16,7 @@ public interface IReceptionistService
     Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default);
     Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default);
     Task RemoveReceptionistAsync(Guid id, CancellationToken ct = default);
-    Task<IEnumerable<ReceptionistDto>> CreateRangeAsync(IEnumerable<CreateReceptionistDto> dtos, CancellationToken ct = default);
-    Task UpdateRangeAsync(IEnumerable<UpdateReceptionistDto> dtos, CancellationToken ct = default);
-    Task RemoveRangeAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
+    Task<List<ReceptionistDto>> CreateRangeAsync(List<CreateReceptionistDto> dtos, CancellationToken ct = default);
+    Task UpdateRangeAsync(List<UpdateReceptionistDto> dtos, CancellationToken ct = default);
+    Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default);
 }
