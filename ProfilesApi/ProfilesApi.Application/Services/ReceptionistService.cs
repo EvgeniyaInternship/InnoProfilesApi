@@ -54,10 +54,11 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             paginationParams.PageSize,
             cancellationToken: ct);
         var totalCount = await unitOfWork.Receptionists.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
 
         var dtos = receptionists.Select(receptionist => receptionist.ToDto());
 
-        return new PagedResultDto<ReceptionistDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<ReceptionistDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default)

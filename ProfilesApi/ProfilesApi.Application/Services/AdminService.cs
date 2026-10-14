@@ -54,10 +54,11 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             paginationParams.PageSize, 
             cancellationToken: ct);
         var totalCount = await unitOfWork.Admins.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
 
         var dtos = admins.Select(admin => admin.ToDto());
 
-        return new PagedResultDto<AdminDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<AdminDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default)

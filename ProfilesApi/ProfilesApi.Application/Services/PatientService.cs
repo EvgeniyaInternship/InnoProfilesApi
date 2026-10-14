@@ -54,10 +54,11 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             paginationParams.PageSize,
             cancellationToken: ct);
         var totalCount = await unitOfWork.Patients.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
 
         var dtos = patients.Select(patient => patient.ToDto());
 
-        return new PagedResultDto<PatientDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<PatientDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default)

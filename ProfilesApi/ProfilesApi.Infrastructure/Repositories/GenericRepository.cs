@@ -25,20 +25,17 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : Sof
     public async Task<IEnumerable<T>> GetAllAsync(
         Expression<Func<T, bool>> predicate,
         int pageNumber = 0,
-        int pageSize = 0,
+        int pageSize = 10,
         bool isTracked = false,
         CancellationToken cancellationToken = default)
     {
         var query = (isTracked ? _dbSet : _dbSet.AsNoTracking()).Where(predicate);
 
-        if (pageNumber > 0 && pageSize > 0)
+        if (pageNumber >= 0 && pageSize > 0)
         {
-            var page = Math.Max(pageNumber, 1);
-            var size = Math.Max(pageSize, 1);
-
             query = query.OrderBy(x => x.Id)
-                         .Skip(page * size)
-                         .Take(size);
+                         .Skip(pageNumber * pageSize)
+                         .Take(pageSize);
         }
 
         return await query.ToListAsync(cancellationToken);

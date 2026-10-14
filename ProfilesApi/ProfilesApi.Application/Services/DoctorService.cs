@@ -55,10 +55,11 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             paginationParams.PageSize, 
             cancellationToken: ct);
         var totalCount = await unitOfWork.Doctors.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
 
         var dtos = doctors.Select(doctor => doctor.ToDto());
 
-        return new PagedResultDto<DoctorDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<DoctorDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<DoctorDto> CreateDoctorAsync(CreateDoctorDto dto, CancellationToken ct = default)

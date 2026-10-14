@@ -1,6 +1,6 @@
 ﻿namespace ProfilesApi.Application.DTOs.Common;
 
 public sealed record PaginationParamsDto(
-    int PageNumber,
-    int PageSize
+    int PageNumber = 0,
+    int PageSize = 10
 );

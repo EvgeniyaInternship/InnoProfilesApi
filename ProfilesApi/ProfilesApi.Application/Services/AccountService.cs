@@ -50,10 +50,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             paginationParams.PageSize, 
             cancellationToken: ct);
         var totalCount = await unitOfWork.Accounts.CountAsync(filterExpression, cancellationToken: ct);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)Math.Max(paginationParams.PageSize, 1));
 
         var dtos = accounts.Select(account => account.ToDto());
 
-        return new PagedResultDto<AccountDto>(dtos, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+        return new PagedResultDto<AccountDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
     public async Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default)
