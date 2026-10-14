@@ -7,6 +7,7 @@ using ProfilesApi.Application.Helpers;
 using ProfilesApi.Application.Interfaces;
 using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
+using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
 using System.Linq.Expressions;
 
@@ -65,7 +66,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Email == dto.Email || x.PhoneNumber == dto.PhoneNumber, cancellationToken: ct);
             if (account is not null)
-                throw new Exception($"Account with Email {dto.Email} or Phone Number {dto.PhoneNumber} already exists.");
+                throw new ConflictException($"Account with Email {dto.Email} or Phone Number {dto.PhoneNumber} already exists.");
 
             account = dto.ToEntity();
 
@@ -75,10 +76,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
             return account.ToDto();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating account.");
+            throw new ServerException("An error occurred while creating account.");
         }
     }
 
@@ -95,10 +96,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating accounts.");
+            throw new ServerException("An error occurred while updating accounts.");
         }
     }
 
@@ -115,10 +116,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing accounts.");
+            throw new ServerException("An error occurred while removing accounts.");
         }
     }
 
@@ -148,10 +149,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
             return entities.Select(account => account.ToDto()).ToList();
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while creating accounts.");
+            throw new ServerException("An error occurred while creating accounts.");
         }
     }
 
@@ -176,10 +177,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while updating accounts.");
+            throw new ServerException("An error occurred while updating accounts.");
         }
     }
 
@@ -200,10 +201,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex) when (ex is not AppException)
         {
             await transaction.RollbackAsync(cancellationToken: ct);
-            throw new Exception("An error occurred while removing accounts.");
+            throw new ServerException("An error occurred while removing accounts.");
         }
     }
 }
