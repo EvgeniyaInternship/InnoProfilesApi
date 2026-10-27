@@ -15,9 +15,6 @@ public static class DoctorMappingExtensions
             entity.UpdatedAt,
             entity.AccountId,
             entity.BirthDate,
-            entity.FirstName,
-            entity.LastName,
-            entity.MiddleName,
             entity.WorkStartDate,
             entity.OfficeId,
             entity.SpecializationId
@@ -30,9 +27,6 @@ public static class DoctorMappingExtensions
         {
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
             SpecializationId = dto.SpecializationId,
@@ -45,12 +39,9 @@ public static class DoctorMappingExtensions
         {
             Id = dto.Id,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
             SpecializationId = dto.SpecializationId
-        };          
+        };
     }
 }

@@ -15,6 +15,9 @@ public static class AccountMappingExtensions
             entity.Email,
             entity.Role,
             entity.PhotoId,
+            entity.FirstName,
+            entity.LastName,
+            entity.MiddleName,
             entity.CreatedAt,
             entity.UpdatedAt
         );
@@ -29,6 +32,9 @@ public static class AccountMappingExtensions
             HashedPassword = dto.PasswordHash,
             Role = dto.Role,
             PhotoId = dto.PhotoId,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
         };
     }
 
@@ -41,6 +47,9 @@ public static class AccountMappingExtensions
             Email = dto.Email,
             Role = dto.Role,
             PhotoId = dto.PhotoId,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            MiddleName = dto.MiddleName,
         };
     }
 }

@@ -15,9 +15,6 @@ public static class PatientMappingExtensions
             entity.UpdatedAt,
             entity.AccountId,
             entity.BirthDate,
-            entity.FirstName,
-            entity.LastName,
-            entity.MiddleName,
             entity.InsuranceNumber
         );
     }
@@ -28,9 +25,6 @@ public static class PatientMappingExtensions
         {
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             InsuranceNumber = dto.InsuranceNumber,
         };
     }
@@ -41,9 +35,6 @@ public static class PatientMappingExtensions
         {
             Id = dto.Id,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             InsuranceNumber = dto.InsuranceNumber,
         };
     }

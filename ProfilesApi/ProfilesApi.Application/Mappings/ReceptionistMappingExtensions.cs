@@ -15,9 +15,6 @@ public static class ReceptionistMappingExtensions
             entity.UpdatedAt,
             entity.AccountId,
             entity.BirthDate,
-            entity.FirstName,
-            entity.LastName,
-            entity.MiddleName,
             entity.WorkStartDate,
             entity.OfficeId
         );
@@ -29,9 +26,6 @@ public static class ReceptionistMappingExtensions
         {
             AccountId = dto.AccountId,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
         };
@@ -43,9 +37,6 @@ public static class ReceptionistMappingExtensions
         {
             Id = dto.Id,
             BirthDate = dto.BirthDate,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            MiddleName = dto.MiddleName,
             WorkStartDate = dto.WorkStartDate,
             OfficeId = dto.OfficeId,
         };

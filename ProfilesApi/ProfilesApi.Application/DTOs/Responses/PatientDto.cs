@@ -6,8 +6,5 @@ public sealed record PatientDto(
     DateTime UpdatedAt,
     Guid AccountId,
     DateTime BirthDate,
-    string FirstName,
-    string LastName,
-    string? MiddleName,
     string InsuranceNumber
 );

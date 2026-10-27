@@ -21,18 +21,9 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         if (filter is null)
             return x => true;
 
-        var searchTerm = filter.SearchTerm?.Trim();
-
         return x => (filter.OfficeId == null || x.OfficeId == filter.OfficeId)
                  && (filter.SpecializationId == null || x.SpecializationId == filter.SpecializationId)
-                 && (filter.WorkStartDate == null || x.WorkStartDate == filter.WorkStartDate)
-                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
-                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
-                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
-                 && (string.IsNullOrWhiteSpace(searchTerm) ||
-                     x.FirstName.Contains(searchTerm) ||
-                     x.LastName.Contains(searchTerm) ||
-                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
+                 && (filter.WorkStartDate == null || x.WorkStartDate == filter.WorkStartDate);
     }
 
     public async Task<DoctorDto> GetDoctorByIdAsync(Guid id, CancellationToken ct = default)

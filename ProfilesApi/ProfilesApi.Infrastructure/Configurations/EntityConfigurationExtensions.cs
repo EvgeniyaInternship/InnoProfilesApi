@@ -26,9 +26,6 @@ public static class EntityConfigurationExtensions
 
     public static void ConfigurePerson<T>(this EntityTypeBuilder<T> builder) where T : PersonEntity
     {
-        builder.Property(x => x.FirstName).IsRequired();
-        builder.Property(x => x.LastName).IsRequired();
-
         builder.HasIndex(x => x.AccountId).IsUnique();
     }
 }
