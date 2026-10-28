@@ -9,4 +9,7 @@ public sealed class AccountEntity : SoftDeletableEntity
     public string HashedPassword { get; set; }
     public AccountRole Role { get; set; } = AccountRole.Patient;
     public Guid? PhotoId { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string? MiddleName { get; set; }
 }

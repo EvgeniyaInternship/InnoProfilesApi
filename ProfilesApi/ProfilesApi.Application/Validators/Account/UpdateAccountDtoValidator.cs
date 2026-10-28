@@ -25,5 +25,19 @@ public sealed class UpdateAccountDtoValidator : AbstractValidator<UpdateAccountD
         RuleFor(x => x.Role)
             .IsInEnum()
             .WithMessage("Invalid account role.");
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty()
+            .MaximumLength(50)
+            .WithMessage("First name cannot exceed 50 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty()
+            .MaximumLength(50)
+            .WithMessage("Last name cannot exceed 50 characters.");
+
+        RuleFor(x => x.MiddleName)
+            .MaximumLength(50)
+            .WithMessage("Middle name cannot exceed 50 characters.");
     }
 }

@@ -6,9 +6,6 @@ public sealed record DoctorDto(
     DateTime UpdatedAt,
     Guid AccountId,
     DateTime BirthDate,
-    string FirstName,
-    string LastName,
-    string? MiddleName,
     DateTime WorkStartDate,
     Guid OfficeId,
     Guid SpecializationId

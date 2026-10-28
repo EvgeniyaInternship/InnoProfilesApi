@@ -25,9 +25,15 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         return x => (filter.Role == null || x.Role == filter.Role)
                  && (string.IsNullOrWhiteSpace(filter.Email) || x.Email.Contains(filter.Email))
                  && (string.IsNullOrWhiteSpace(filter.PhoneNumber) || x.PhoneNumber.Contains(filter.PhoneNumber))
+                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
+                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
+                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
                  && (string.IsNullOrWhiteSpace(searchTerm) ||
                      x.Email.Contains(searchTerm) ||
-                     x.PhoneNumber.Contains(searchTerm));
+                     x.PhoneNumber.Contains(searchTerm) ||
+                     x.FirstName.Contains(searchTerm) ||
+                     x.LastName.Contains(searchTerm) ||
+                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
     }
 
     public async Task<AccountDto> GetAccountByIdAsync(Guid id, CancellationToken ct = default)

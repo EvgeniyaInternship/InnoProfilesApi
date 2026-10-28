@@ -8,6 +8,9 @@ public sealed record AccountDto(
     string Email,
     AccountRole Role,
     Guid? PhotoId,
+    string FirstName,
+    string LastName,
+    string? MiddleName,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );

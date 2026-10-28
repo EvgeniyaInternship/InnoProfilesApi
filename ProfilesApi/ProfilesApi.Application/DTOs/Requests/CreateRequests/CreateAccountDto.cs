@@ -7,5 +7,8 @@ public sealed record CreateAccountDto(
     string Email,
     string PasswordHash,
     AccountRole Role,
-    Guid? PhotoId
+    Guid? PhotoId,
+    string FirstName,
+    string LastName,
+    string? MiddleName
 );

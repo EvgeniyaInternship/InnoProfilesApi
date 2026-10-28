@@ -24,14 +24,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         var searchTerm = filter.SearchTerm?.Trim();
 
         return x => (string.IsNullOrWhiteSpace(filter.InsuranceNumber) || x.InsuranceNumber.Contains(filter.InsuranceNumber))
-                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
-                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
-                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
-                 && (string.IsNullOrWhiteSpace(searchTerm) ||
-                     x.FirstName.Contains(searchTerm) ||
-                     x.LastName.Contains(searchTerm) ||
-                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)) ||
-                     x.InsuranceNumber.Contains(searchTerm));
+                 && (string.IsNullOrWhiteSpace(searchTerm) || x.InsuranceNumber.Contains(searchTerm));
     }
 
     public async Task<PatientDto> GetPatientByIdAsync(Guid id, CancellationToken ct = default)

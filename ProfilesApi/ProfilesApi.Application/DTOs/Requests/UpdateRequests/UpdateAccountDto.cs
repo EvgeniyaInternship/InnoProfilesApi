@@ -7,5 +7,8 @@ public sealed record UpdateAccountDto(
     string PhoneNumber,
     string Email,
     AccountRole Role,
-    Guid? PhotoId
+    Guid? PhotoId,
+    string FirstName,
+    string LastName,
+    string? MiddleName
 );

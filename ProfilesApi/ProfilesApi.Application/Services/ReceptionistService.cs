@@ -21,17 +21,8 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         if (filter is null)
             return x => true;
         
-        var searchTerm = filter.SearchTerm?.Trim();
-
         return x => (filter.OfficeId == null || x.OfficeId == filter.OfficeId)
-                 && (filter.WorkStartDate == null || x.WorkStartDate >= filter.WorkStartDate)
-                 && (string.IsNullOrWhiteSpace(filter.FirstName) || x.FirstName.Contains(filter.FirstName))
-                 && (string.IsNullOrWhiteSpace(filter.LastName) || x.LastName.Contains(filter.LastName))
-                 && (string.IsNullOrWhiteSpace(filter.MiddleName) || (x.MiddleName != null && x.MiddleName.Contains(filter.MiddleName)))
-                 && (string.IsNullOrWhiteSpace(searchTerm) ||
-                     x.FirstName.Contains(searchTerm) ||
-                     x.LastName.Contains(searchTerm) ||
-                     (x.MiddleName != null && x.MiddleName.Contains(searchTerm)));
+                 && (filter.WorkStartDate == null || x.WorkStartDate >= filter.WorkStartDate);
     }
 
     public async Task<ReceptionistDto> GetReceptionistByIdAsync(Guid id, CancellationToken ct = default)
