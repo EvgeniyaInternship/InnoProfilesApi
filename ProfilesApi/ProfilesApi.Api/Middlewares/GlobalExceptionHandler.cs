@@ -20,6 +20,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             ConflictException =>
                 (StatusCodes.Status400BadRequest, "Resource Conflict"),
 
+            IdentityProviderException =>
+                (StatusCodes.Status502BadGateway, "Identity Provider Error"),
+
             UnauthorizedAccessException =>
                 (StatusCodes.Status401Unauthorized, "Unauthorized"),
 
