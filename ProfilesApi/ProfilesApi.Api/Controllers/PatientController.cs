@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Api.Authorization;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
@@ -12,6 +15,8 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class PatientController(IPatientService patientService) : ControllerBase
 {
+    [Authorize(Policy = Policies.AnyRole)]
+    [OwnResource(ProfileSubject.Patient, AccountRole.Doctor, AccountRole.Receptionist)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -21,6 +26,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return Ok(patient);
     }
 
+    [Authorize(Policy = Policies.Staff)]
     [HttpGet]
     [ProducesResponseType(typeof(List<PatientDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPatients([FromQuery] PatientFilterDto? filter, [FromQuery] PaginationParamsDto paginationParams, CancellationToken cancellationToken)
@@ -29,6 +35,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return Ok(patients);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -39,6 +46,8 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, patient);
     }
 
+    [Authorize(Policy = Policies.UpdatePatient)]
+    [OwnResource(ProfileSubject.Patient)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -50,6 +59,8 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.UpdatePatient)]
+    [OwnResource(ProfileSubject.Patient)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -60,6 +71,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost("batch")]
     [ProducesResponseType(typeof(List<PatientDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -70,6 +82,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return Ok(patients);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPut("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -81,6 +94,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Api.Authorization;
+using ProfilesApi.Domain.Enum;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
@@ -12,6 +15,8 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class AccountController(IAccountService accountService) : ControllerBase
 {
+    [Authorize(Policy = Policies.AnyRole)]
+    [OwnResource(ProfileSubject.Account, AccountRole.Doctor, AccountRole.Receptionist)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -22,6 +27,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return Ok(account);
     }
 
+    [Authorize(Policy = Policies.Staff)]
     [HttpGet]
     [ProducesResponseType(typeof(List<AccountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -31,6 +37,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return Ok(pagedAccounts);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -41,6 +48,8 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return CreatedAtAction(nameof(GetAccountById), new { id = account.Id }, account);
     }
 
+    [Authorize(Policy = Policies.AnyRole)]
+    [OwnResource(ProfileSubject.Account)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -48,10 +57,14 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateAccount([FromBody] UpdateAccountDto dto, CancellationToken cancellationToken)
     {
+        if (!User.IsInRole(AccountRole.Admin.ToString()) && !User.IsInRole(dto.Role.ToString()))
+            return Forbid();
+
         await accountService.UpdateAccountAsync(dto, cancellationToken);
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -62,6 +75,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost("batch")]
     [ProducesResponseType(typeof(List<AccountDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -72,6 +86,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return Ok(accounts);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPut("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -83,6 +98,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
