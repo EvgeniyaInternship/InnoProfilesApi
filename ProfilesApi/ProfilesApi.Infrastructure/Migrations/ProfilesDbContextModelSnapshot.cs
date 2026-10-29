@@ -190,8 +190,6 @@ namespace ProfilesApi.Infrastructure.Migrations
 
                     b.HasIndex("OfficeId");
 
-                    b.HasIndex("SpecializationId");
-
                     b.ToTable("Doctors");
                 });
 
@@ -238,7 +236,8 @@ namespace ProfilesApi.Infrastructure.Migrations
                     b.HasIndex("AccountId")
                         .IsUnique();
 
-                    b.HasIndex("InsuranceNumber");
+                    b.HasIndex("InsuranceNumber")
+                        .IsUnique();
 
                     b.ToTable("Patients");
                 });
