@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Api.Authorization;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
@@ -9,6 +11,7 @@ using ProfilesApi.Application.Interfaces;
 namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.Admin)]
 [Route("[controller]")]
 public sealed class AdminController(IAdminService adminService) : ControllerBase
 {

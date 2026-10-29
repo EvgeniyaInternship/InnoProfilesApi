@@ -1,4 +1,6 @@
-﻿namespace ProfilesApi.Api.Extensions;
+﻿using ProfilesApi.Api.Options;
+
+namespace ProfilesApi.Api.Extensions;
 
 public static class ApplicationBuilderExtensions
 {
@@ -6,10 +8,14 @@ public static class ApplicationBuilderExtensions
     {
         if (app.Environment.IsDevelopment())
         {
+            var keycloak = app.Configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Profiles API v1");
+                c.OAuthClientId(keycloak?.Audience);
+                c.OAuthUsePkce();
+                c.OAuthScopes("openid");
             });
         }
 
@@ -18,7 +24,8 @@ public static class ApplicationBuilderExtensions
 
     public static WebApplication UseApiMiddlewares(this WebApplication app)
     {
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+            app.UseHttpsRedirection();
 
         app.UseAuthentication();
         app.UseAuthorization();

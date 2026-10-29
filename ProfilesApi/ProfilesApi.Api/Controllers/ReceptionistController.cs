@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Api.Authorization;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
@@ -9,6 +11,7 @@ using ProfilesApi.Application.Interfaces;
 namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.Staff)]
 [Route("[controller]")]
 public sealed class ReceptionistController(IReceptionistService receptionistService) : ControllerBase
 {
@@ -31,6 +34,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return Ok(receptionists);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost]
     [ProducesResponseType(typeof(ReceptionistDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -41,6 +45,8 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return CreatedAtAction(nameof(GetReceptionistById), new { id = receptionist.Id }, receptionist);
     }
 
+    [Authorize(Policy = Policies.UpdateReceptionist)]
+    [OwnResource(ProfileSubject.Receptionist)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -52,6 +58,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -62,6 +69,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPost("batch")]
     [ProducesResponseType(typeof(List<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -72,6 +80,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return Ok(receptionists);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpPut("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -83,6 +92,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return NoContent();
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("batch")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
