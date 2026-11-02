@@ -32,7 +32,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
         return Ok(doctor);
     }
 
-    [Authorize(Policy = Policies.AnyRole)]
+    [Authorize]
     [HttpGet]
     [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

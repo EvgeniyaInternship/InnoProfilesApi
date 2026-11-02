@@ -9,7 +9,6 @@ public static class Policies
     public const string Doctor = "Doctor";
     public const string Receptionist = "Receptionist";
     public const string Staff = "Staff";
-    public const string AnyRole = "AnyRole";
     public const string CreateAccount = "CreateAccount";
     public const string DoctorAndAdmin = "DoctorAndAdmin";
     public const string PatientAndAdmin = "PatientAndAdmin";
@@ -25,7 +24,6 @@ public static class Policies
         options.AddPolicy(Doctor, policy => policy.Require(AccountRole.Doctor));
         options.AddPolicy(Receptionist, policy => policy.Require(AccountRole.Receptionist));
         options.AddPolicy(Staff, policy => policy.Require(AccountRole.Admin, AccountRole.Doctor, AccountRole.Receptionist));
-        options.AddPolicy(AnyRole, policy => policy.Require(AccountRole.Admin, AccountRole.Doctor, AccountRole.Receptionist, AccountRole.Patient));
         options.AddPolicy(CreateAccount, policy => policy.Require(AccountRole.Admin, AccountRole.Patient));
         options.AddPolicy(DoctorAndAdmin, policy => policy.Require(AccountRole.Admin, AccountRole.Doctor));
         options.AddPolicy(PatientAndAdmin, policy => policy.Require(AccountRole.Admin, AccountRole.Patient));

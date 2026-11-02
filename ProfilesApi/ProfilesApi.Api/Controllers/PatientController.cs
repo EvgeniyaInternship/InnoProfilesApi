@@ -16,7 +16,7 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class PatientController(IPatientService patientService) : ControllerBase
 {
-    [Authorize(Policy = Policies.AnyRole)]
+    [Authorize]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

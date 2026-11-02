@@ -16,7 +16,7 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class AccountController(IAccountService accountService) : ControllerBase
 {
-    [Authorize(Policy = Policies.AnyRole)]
+    [Authorize]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -52,7 +52,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return CreatedAtAction(nameof(GetAccountById), new { id = account.Id }, account);
     }
 
-    [Authorize(Policy = Policies.AnyRole)]
+    [Authorize]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
