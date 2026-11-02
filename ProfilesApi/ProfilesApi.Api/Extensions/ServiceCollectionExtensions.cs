@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
 using ProfilesApi.Api.Clients;
 using ProfilesApi.Api.Middlewares;
 using ProfilesApi.Api.Options;
@@ -48,11 +49,21 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
+    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services, IConfiguration configuration)
     {
+        var authority = KeycloakAuthority(configuration);
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new() { Title = "Profiles API", Version = "v1" });
+            options.AddSecurityDefinition("Keycloak", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.OpenIdConnect,
+                OpenIdConnectUrl = new Uri($"{authority}/.well-known/openid-configuration")
+            });
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Keycloak", document)] = ["openid"]
+            });
             options.UseOneOfForPolymorphism();
             options.SelectDiscriminatorNameUsing(type =>
                 type == typeof(RegisterUserDto) || type == typeof(RegisteredUserDto) ? "role" : null);
@@ -93,6 +104,15 @@ public static class ServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    private static string KeycloakAuthority(IConfiguration configuration)
+    {
+        var options = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
+        if (string.IsNullOrWhiteSpace(options.BaseUrl) || string.IsNullOrWhiteSpace(options.Realm))
+            throw new InvalidOperationException("Keycloak authentication settings are incomplete.");
+
+        return $"{options.BaseUrl.TrimEnd('/')}/realms/{options.Realm}";
     }
 
     public static IServiceCollection AddExceptionHandler(this IServiceCollection services)

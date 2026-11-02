@@ -1,14 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProfilesApi.Api.Authorization;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
+using System.Security.Claims;
 
 namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.Admin)]
 [Route("[controller]")]
 public sealed class AdminController(IAdminService adminService) : ControllerBase
 {
@@ -48,7 +52,11 @@ public sealed class AdminController(IAdminService adminService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateAdmin([FromBody] UpdateAdminDto dto, CancellationToken cancellationToken)
     {
-        await adminService.UpdateAdminAsync(dto, cancellationToken);
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != dto.Id.ToString())
+            return Forbid();
+
+        await adminService.UpdateAdminAsync(dto, Guid.Parse(subjectId), cancellationToken);
         return NoContent();
     }
 
