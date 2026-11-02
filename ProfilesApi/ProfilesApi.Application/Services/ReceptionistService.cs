@@ -85,7 +85,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         }
     }
 
-    public async Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default)
+    public async Task UpdateReceptionistAsync(UpdateReceptionistDto dto, Guid accountId, CancellationToken ct = default)
     {
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -93,6 +93,9 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
             if (receptionist is null)
                 throw new KeyNotFoundException($"Receptionist with ID {dto.Id} was not found.");
+
+            if (receptionist.AccountId != accountId)
+                throw new InvalidOperationException("You are not the owner of this receptionist record.");
 
             unitOfWork.Receptionists.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);

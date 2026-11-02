@@ -7,14 +7,16 @@ using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
+using ProfilesApi.Domain.Enum;
+using System.Security.Claims;
 
 namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
-[Authorize(Policy = Policies.ReadDoctors)]
 [Route("[controller]")]
 public sealed class DoctorController(IDoctorService doctorService) : ControllerBase
 {
+    [Authorize(Policy = Policies.Staff)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -22,9 +24,15 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     public async Task<IActionResult> GetDoctorById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var doctor = await doctorService.GetDoctorByIdAsync(id, cancellationToken);
+
+        string? subjectId = User.FindFirstValue("sub");
+        if (!User.IsInRole(AccountRole.Admin.ToString()) && doctor.AccountId.ToString() != subjectId)
+            return Forbid();
+
         return Ok(doctor);
     }
 
+    [Authorize(Policy = Policies.AnyRole)]
     [HttpGet]
     [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -45,8 +53,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
         return CreatedAtAction(nameof(GetDoctorById), new { id = doctor.Id }, doctor);
     }
 
-    [Authorize(Policy = Policies.UpdateDoctor)]
-    [OwnResource(ProfileSubject.Doctor)]
+    [Authorize(Policy = Policies.DoctorAndAdmin)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -54,7 +61,11 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateDoctor([FromBody] UpdateDoctorDto dto, CancellationToken cancellationToken)
     {
-        await doctorService.UpdateDoctorAsync(dto, cancellationToken);
+        string? subjectId = User.FindFirstValue("sub");
+        if (!User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
+        await doctorService.UpdateDoctorAsync(dto, Guid.Parse(subjectId), cancellationToken);
         return NoContent();
     }
 

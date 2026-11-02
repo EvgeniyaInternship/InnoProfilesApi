@@ -87,7 +87,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         }
     }
 
-    public async Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default)
+    public async Task UpdatePatientAsync(UpdatePatientDto dto, Guid accountId, CancellationToken ct = default)
     {
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -95,6 +95,9 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             var patient = await unitOfWork.Patients.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
             if (patient is null)
                 throw new KeyNotFoundException($"Patient with ID {dto.Id} was not found.");
+            
+            if (patient.AccountId != accountId)
+                throw new InvalidOperationException("You are not the owner of this patient record.");
 
             unitOfWork.Patients.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);

@@ -14,7 +14,7 @@ public interface IAdminService
         AdminFilterDto? filter = null,
         CancellationToken ct = default);
     Task<AdminDto> CreateAdminAsync(CreateAdminDto dto, CancellationToken ct = default);
-    Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default);
+    Task UpdateAdminAsync(UpdateAdminDto dto, Guid accountId, CancellationToken ct = default);
     Task RemoveAdminAsync(Guid id, CancellationToken ct = default);
     Task<List<AdminDto>> CreateRangeAsync(List<CreateAdminDto> dtos, CancellationToken ct = default);
     Task UpdateRangeAsync(List<UpdateAdminDto> dtos, CancellationToken ct = default);

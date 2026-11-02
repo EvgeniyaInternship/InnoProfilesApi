@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProfilesApi.Api.Authorization;
 using ProfilesApi.Application.DTOs.Requests.Registration;
 using ProfilesApi.Application.DTOs.Responses.Registration;
 using ProfilesApi.Application.Interfaces;

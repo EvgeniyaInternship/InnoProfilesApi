@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProfilesApi.Api.Authorization;
-using ProfilesApi.Domain.Enum;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
+using ProfilesApi.Domain.Enum;
+using System.Security.Claims;
 
 namespace ProfilesApi.Api.Controllers;
 
@@ -16,13 +17,17 @@ namespace ProfilesApi.Api.Controllers;
 public sealed class PatientController(IPatientService patientService) : ControllerBase
 {
     [Authorize(Policy = Policies.AnyRole)]
-    [OwnResource(ProfileSubject.Patient, AccountRole.Doctor, AccountRole.Receptionist)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPatientById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var patient = await patientService.GetPatientByIdAsync(id, cancellationToken);
+        
+        string? subjectId = User.FindFirstValue("sub");
+        if (!User.IsInRole(AccountRole.Admin.ToString()) && patient.AccountId.ToString() != subjectId)
+            return Forbid();
+
         return Ok(patient);
     }
 
@@ -46,8 +51,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, patient);
     }
 
-    [Authorize(Policy = Policies.UpdatePatient)]
-    [OwnResource(ProfileSubject.Patient)]
+    [Authorize(Policy = Policies.PatientAndAdmin)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -55,18 +59,25 @@ public sealed class PatientController(IPatientService patientService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdatePatient([FromBody] UpdatePatientDto dto, CancellationToken cancellationToken)
     {
-        await patientService.UpdatePatientAsync(dto, cancellationToken);
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != dto.Id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
+        await patientService.UpdatePatientAsync(dto, Guid.Parse(subjectId), cancellationToken);
         return NoContent();
     }
 
-    [Authorize(Policy = Policies.UpdatePatient)]
-    [OwnResource(ProfileSubject.Patient)]
+    [Authorize(Policy = Policies.PatientAndAdmin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemovePatient([FromRoute] Guid id, CancellationToken cancellationToken)
     {
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
         await patientService.RemovePatientAsync(id, cancellationToken);
         return NoContent();
     }

@@ -7,14 +7,16 @@ using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
+using ProfilesApi.Domain.Enum;
+using System.Security.Claims;
 
 namespace ProfilesApi.Api.Controllers;
 
 [ApiController]
-[Authorize(Policy = Policies.Staff)]
 [Route("[controller]")]
 public sealed class ReceptionistController(IReceptionistService receptionistService) : ControllerBase
 {
+    [Authorize(Policy = Policies.ReceptionistAndAdmin)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ReceptionistDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -22,6 +24,11 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     public async Task<IActionResult> GetReceptionistById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var receptionist = await receptionistService.GetReceptionistByIdAsync(id, cancellationToken);
+        
+        string? subjectId = User.FindFirstValue("sub");
+        if (!User.IsInRole(AccountRole.Admin.ToString()) && receptionist.AccountId.ToString() != subjectId)
+            return Forbid();
+
         return Ok(receptionist);
     }
 
@@ -45,8 +52,7 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return CreatedAtAction(nameof(GetReceptionistById), new { id = receptionist.Id }, receptionist);
     }
 
-    [Authorize(Policy = Policies.UpdateReceptionist)]
-    [OwnResource(ProfileSubject.Receptionist)]
+    [Authorize(Policy = Policies.ReceptionistAndAdmin)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -54,7 +60,11 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateReceptionist([FromBody] UpdateReceptionistDto dto, CancellationToken cancellationToken)
     {
-        await receptionistService.UpdateReceptionistAsync(dto, cancellationToken);
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != dto.Id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
+        await receptionistService.UpdateReceptionistAsync(dto, Guid.Parse(subjectId), cancellationToken);
         return NoContent();
     }
 

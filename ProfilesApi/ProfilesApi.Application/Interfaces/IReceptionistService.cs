@@ -14,7 +14,7 @@ public interface IReceptionistService
         ReceptionistFilterDto? filter = null,
         CancellationToken ct = default);
     Task<ReceptionistDto> CreateReceptionistAsync(CreateReceptionistDto dto, CancellationToken ct = default);
-    Task UpdateReceptionistAsync(UpdateReceptionistDto dto, CancellationToken ct = default);
+    Task UpdateReceptionistAsync(UpdateReceptionistDto dto, Guid accountId, CancellationToken ct = default);
     Task RemoveReceptionistAsync(Guid id, CancellationToken ct = default);
     Task<List<ReceptionistDto>> CreateRangeAsync(List<CreateReceptionistDto> dtos, CancellationToken ct = default);
     Task UpdateRangeAsync(List<UpdateReceptionistDto> dtos, CancellationToken ct = default);

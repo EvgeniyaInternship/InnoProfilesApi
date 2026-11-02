@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProfilesApi.Api.Authorization;
-using ProfilesApi.Domain.Enum;
 using ProfilesApi.Application.DTOs.Common;
 using ProfilesApi.Application.DTOs.Filters;
 using ProfilesApi.Application.DTOs.Requests.CreateRequests;
 using ProfilesApi.Application.DTOs.Requests.UpdateRequests;
 using ProfilesApi.Application.DTOs.Responses;
 using ProfilesApi.Application.Interfaces;
+using ProfilesApi.Domain.Enum;
+using System.Security.Claims;
 
 namespace ProfilesApi.Api.Controllers;
 
@@ -16,13 +17,16 @@ namespace ProfilesApi.Api.Controllers;
 public sealed class AccountController(IAccountService accountService) : ControllerBase
 {
     [Authorize(Policy = Policies.AnyRole)]
-    [OwnResource(ProfileSubject.Account, AccountRole.Doctor, AccountRole.Receptionist)]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAccountById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
         var account = await accountService.GetAccountByIdAsync(id, cancellationToken);
         return Ok(account);
     }
@@ -37,7 +41,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return Ok(pagedAccounts);
     }
 
-    [Authorize(Policy = Policies.Admin)]
+    [Authorize(Policy = Policies.CreateAccount)]
     [HttpPost]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -49,7 +53,6 @@ public sealed class AccountController(IAccountService accountService) : Controll
     }
 
     [Authorize(Policy = Policies.AnyRole)]
-    [OwnResource(ProfileSubject.Account)]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -57,20 +60,25 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateAccount([FromBody] UpdateAccountDto dto, CancellationToken cancellationToken)
     {
-        if (!User.IsInRole(AccountRole.Admin.ToString()) && !User.IsInRole(dto.Role.ToString()))
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != dto.Id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()) && dto.Id.ToString() != subjectId)
             return Forbid();
 
         await accountService.UpdateAccountAsync(dto, cancellationToken);
         return NoContent();
     }
 
-    [Authorize(Policy = Policies.Admin)]
+    [Authorize(Policy = Policies.PatientAndAdmin)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveAccount([FromRoute] Guid id, CancellationToken cancellationToken)
     {
+        string? subjectId = User.FindFirstValue("sub");
+        if (subjectId != id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+            return Forbid();
+
         await accountService.RemoveAccountAsync(id, cancellationToken);
         return NoContent();
     }

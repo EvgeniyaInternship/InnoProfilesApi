@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using ProfilesApi.Api.Authorization;
 using ProfilesApi.Api.Options;
+using ProfilesApi.Domain.Enum;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
@@ -11,18 +12,9 @@ namespace ProfilesApi.Api.Extensions;
 
 public static class AuthenticationExtensions
 {
-    private const string AccessTokenCookie = "accessToken";
-
     public static IServiceCollection AddKeycloakAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var options = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
-        if (string.IsNullOrWhiteSpace(options.BaseUrl)
-            || string.IsNullOrWhiteSpace(options.Realm)
-            || string.IsNullOrWhiteSpace(options.Audience))
-        {
-            throw new InvalidOperationException("Keycloak authentication settings are incomplete.");
-        }
-
         var authority = $"{options.BaseUrl.TrimEnd('/')}/realms/{options.Realm}";
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -48,10 +40,15 @@ public static class AuthenticationExtensions
                 {
                     OnMessageReceived = context =>
                     {
-                        if (context.Request.Cookies.TryGetValue(AccessTokenCookie, out var accessToken)
-                            && !string.IsNullOrWhiteSpace(accessToken))
+                        if (context.Request.Cookies.TryGetValue("accessToken", out var cookieToken)
+                            && !string.IsNullOrWhiteSpace(cookieToken))
                         {
-                            context.Token = accessToken;
+                            context.Token = cookieToken;
+                        }
+                        else if (context.Request.Query.TryGetValue("access_token", out var queryToken)
+                            && !string.IsNullOrWhiteSpace(queryToken))
+                        {
+                            context.Token = queryToken;
                         }
 
                         return Task.CompletedTask;
@@ -59,7 +56,9 @@ public static class AuthenticationExtensions
                     OnTokenValidated = context =>
                     {
                         if (context.Principal?.Identity is ClaimsIdentity identity)
+                        {
                             MapRoleClaims(identity);
+                        }
 
                         return Task.CompletedTask;
                     }
@@ -89,33 +88,31 @@ public static class AuthenticationExtensions
 
     private static void MapRoleClaims(ClaimsIdentity identity)
     {
-        var roles = new HashSet<string>(StringComparer.Ordinal);
         var realmAccess = identity.FindFirst("realm_access")?.Value;
-        if (!string.IsNullOrWhiteSpace(realmAccess))
+        if (string.IsNullOrWhiteSpace(realmAccess))
+            return;
+
+        try
         {
-            try
+            using var document = JsonDocument.Parse(realmAccess);
+            if (document.RootElement.TryGetProperty("roles", out var realmRoles)
+                && realmRoles.ValueKind == JsonValueKind.Array)
             {
-                using var document = JsonDocument.Parse(realmAccess);
-                if (document.RootElement.TryGetProperty("roles", out var realmRoles)
-                    && realmRoles.ValueKind == JsonValueKind.Array)
+                foreach (var roleElement in realmRoles.EnumerateArray())
                 {
-                    foreach (var role in realmRoles.EnumerateArray())
+                    var roleName = roleElement.GetString();
+
+                    if (!string.IsNullOrWhiteSpace(roleName)
+                        && Enum.TryParse<AccountRole>(roleName, ignoreCase: true, out var matchedRole))
                     {
-                        var value = role.GetString();
-                        if (!string.IsNullOrWhiteSpace(value))
-                            roles.Add(value);
+                        identity.AddClaim(new Claim("role", matchedRole.ToString()));
+                        break;
                     }
                 }
             }
-            catch (JsonException)
-            {
-            }
         }
-
-        foreach (var role in roles)
+        catch (JsonException)
         {
-            if (!identity.HasClaim("role", role))
-                identity.AddClaim(new Claim("role", role));
         }
     }
 }

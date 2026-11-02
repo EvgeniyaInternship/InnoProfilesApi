@@ -14,7 +14,7 @@ public interface IPatientService
         PatientFilterDto? filter = null,
         CancellationToken ct = default);
     Task<PatientDto> CreatePatientAsync(CreatePatientDto dto, CancellationToken ct = default);
-    Task UpdatePatientAsync(UpdatePatientDto dto, CancellationToken ct = default);
+    Task UpdatePatientAsync(UpdatePatientDto dto, Guid accountId, CancellationToken ct = default);
     Task RemovePatientAsync(Guid id, CancellationToken ct = default);
     Task<List<PatientDto>> CreateRangeAsync(List<CreatePatientDto> dtos, CancellationToken ct = default);
     Task UpdateRangeAsync(List<UpdatePatientDto> dtos, CancellationToken ct = default);

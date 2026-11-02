@@ -13,6 +13,7 @@ public static class ApplicationBuilderExtensions
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Profiles API v1");
+                c.ConfigObject.AdditionalItems["withCredentials"] = true;
                 c.OAuthClientId(keycloak?.Audience);
                 c.OAuthUsePkce();
                 c.OAuthScopes("openid");

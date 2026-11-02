@@ -1,6 +1,5 @@
 using FluentValidation;
 using ProfilesApi.Application.DTOs.Requests.Registration;
-using ProfilesApi.Application.Validators;
 
 namespace ProfilesApi.Application.Validators.Registration;
 

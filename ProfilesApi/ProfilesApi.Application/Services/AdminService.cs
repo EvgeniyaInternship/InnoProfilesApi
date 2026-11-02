@@ -85,7 +85,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         }
     }
 
-    public async Task UpdateAdminAsync(UpdateAdminDto dto, CancellationToken ct = default)
+    public async Task UpdateAdminAsync(UpdateAdminDto dto, Guid accountId, CancellationToken ct = default)
     {
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -93,6 +93,9 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             var admin = await unitOfWork.Admins.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
             if (admin is null)
                 throw new KeyNotFoundException($"Admin with ID {dto.Id} was not found.");
+
+            if (admin.AccountId != accountId)
+                throw new InvalidOperationException("You are not the owner of this admin record.");
 
             unitOfWork.Admins.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
