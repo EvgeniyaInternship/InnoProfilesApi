@@ -17,6 +17,15 @@ public static class AuthenticationExtensions
         var options = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
         var authority = $"{options.BaseUrl.TrimEnd('/')}/realms/{options.Realm}";
 
+        services.AddCors(options =>
+        {
+            options.AddPolicy("ClinicUi", policy =>
+                policy.WithOrigins("http://localhost:5173")
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+                    .WithMethods("GET", "POST"));
+        });
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(jwtOptions =>
             {

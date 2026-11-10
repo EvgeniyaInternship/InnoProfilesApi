@@ -11,6 +11,7 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class RegistrationController(IRegistrationService registrationService) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost]
     [ProducesResponseType(typeof(RegisteredUserDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

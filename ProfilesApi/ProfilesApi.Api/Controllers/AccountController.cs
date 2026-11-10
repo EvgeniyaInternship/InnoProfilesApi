@@ -31,6 +31,22 @@ public sealed class AccountController(IAccountService accountService) : Controll
         return Ok(account);
     }
 
+    [Authorize]
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetCurrentAccount(CancellationToken cancellationToken)
+    {
+        string? subjectId = User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(subjectId, out var accountId))
+            return Unauthorized();
+
+        var account = await accountService.GetAccountByIdAsync(accountId, cancellationToken);
+        return Ok(account);
+    }
+
     [Authorize(Policy = Policies.Staff)]
     [HttpGet]
     [ProducesResponseType(typeof(List<AccountDto>), StatusCodes.Status200OK)]
