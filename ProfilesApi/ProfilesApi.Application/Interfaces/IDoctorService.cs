@@ -9,6 +9,7 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IDoctorService
 {
     Task<DoctorDto> GetDoctorByIdAsync(Guid id, CancellationToken ct = default);
+    Task<DoctorDto> GetDoctorByAccountIdAsync(Guid accountId, CancellationToken ct = default);
     Task<PagedResultDto<DoctorDto>> GetDoctorsAsync(
         PaginationParamsDto paginationParams,
         DoctorFilterDto? filter = null,

@@ -76,23 +76,25 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateAccount([FromBody] UpdateAccountDto dto, CancellationToken cancellationToken)
     {
-        string? subjectId = User.FindFirstValue("sub");
-        if (subjectId != dto.Id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()) && dto.Id.ToString() != subjectId)
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+        if (accountId != dto.Id && !User.IsInRole(AccountRole.Admin.ToString()))
             return Forbid();
 
         await accountService.UpdateAccountAsync(dto, cancellationToken);
         return NoContent();
     }
 
-    [Authorize(Policy = Policies.PatientAndAdmin)]
+    [Authorize]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveAccount([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        string? subjectId = User.FindFirstValue("sub");
-        if (subjectId != id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+        if (accountId != id && !User.IsInRole(AccountRole.Admin.ToString()))
             return Forbid();
 
         await accountService.RemoveAccountAsync(id, cancellationToken);

@@ -34,6 +34,15 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         return admin.ToDto();
     }
 
+    public async Task<AdminDto> GetAdminByAccountIdAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var admin = await unitOfWork.Admins.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
+        if (admin is null)
+            throw new KeyNotFoundException($"Admin for account {accountId} was not found.");
+
+        return admin.ToDto();
+    }
+
     public async Task<PagedResultDto<AdminDto>> GetAdminsAsync(
         PaginationParamsDto paginationParams,
         AdminFilterDto? filter = null,
