@@ -28,6 +28,7 @@ public static class ApplicationBuilderExtensions
         if (!app.Environment.IsDevelopment())
             app.UseHttpsRedirection();
 
+        app.UseCors("ClinicUi");
         app.UseAuthentication();
         app.UseAuthorization();
 
