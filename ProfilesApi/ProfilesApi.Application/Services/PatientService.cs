@@ -36,6 +36,15 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         return patient.ToDto();
     }
 
+    public async Task<PatientDto> GetPatientByAccountIdAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var patient = await unitOfWork.Patients.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
+        if (patient is null)
+            throw new KeyNotFoundException($"Patient for account {accountId} was not found.");
+
+        return patient.ToDto();
+    }
+
     public async Task<PagedResultDto<PatientDto>> GetPatientsAsync(
         PaginationParamsDto paginationParams,
         PatientFilterDto? filter = null,
@@ -89,17 +98,17 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task UpdatePatientAsync(UpdatePatientDto dto, Guid accountId, CancellationToken ct = default)
     {
+        var patient = await unitOfWork.Patients.GetAsync(x => x.Id == dto.Id, true, cancellationToken: ct);
+        if (patient is null)
+            throw new KeyNotFoundException($"Patient with ID {dto.Id} was not found.");
+        if (patient.AccountId != accountId)
+            throw new UnauthorizedAccessException("You are not the owner of this patient record.");
+
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var patient = await unitOfWork.Patients.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-            if (patient is null)
-                throw new KeyNotFoundException($"Patient with ID {dto.Id} was not found.");
-            
-            if (patient.AccountId != accountId)
-                throw new InvalidOperationException("You are not the owner of this patient record.");
-
-            unitOfWork.Patients.Update(dto.UpdateEntity());
+            patient.BirthDate = dto.BirthDate;
+            patient.InsuranceNumber = dto.InsuranceNumber;
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

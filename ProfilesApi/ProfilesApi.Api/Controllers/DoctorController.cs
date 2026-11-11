@@ -33,6 +33,20 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     }
 
     [Authorize]
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentDoctor(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+
+        var doctor = await doctorService.GetDoctorByAccountIdAsync(accountId, cancellationToken);
+        return Ok(doctor);
+    }
+
+    [Authorize]
     [HttpGet]
     [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

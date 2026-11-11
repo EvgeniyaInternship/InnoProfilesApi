@@ -26,6 +26,19 @@ public sealed class AdminController(IAdminService adminService) : ControllerBase
         return Ok(admin);
     }
 
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentAdmin(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+
+        var admin = await adminService.GetAdminByAccountIdAsync(accountId, cancellationToken);
+        return Ok(admin);
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(List<AdminDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

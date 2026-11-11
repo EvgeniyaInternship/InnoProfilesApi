@@ -91,14 +91,20 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task UpdateAccountAsync(UpdateAccountDto dto, CancellationToken ct = default)
     {
+        var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, true, cancellationToken: ct);
+        if (account is null)
+            throw new KeyNotFoundException($"Account with ID {dto.Id} was not found.");
+
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
         {
-            var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
-            if (account is null)
-                throw new KeyNotFoundException($"Account with ID {dto.Id} was not found.");
-
-            unitOfWork.Accounts.Update(dto.UpdateEntity());
+            account.PhoneNumber = dto.PhoneNumber;
+            account.Email = dto.Email;
+            account.Role = dto.Role;
+            account.PhotoId = dto.PhotoId;
+            account.FirstName = dto.FirstName;
+            account.LastName = dto.LastName;
+            account.MiddleName = dto.MiddleName;
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
         }

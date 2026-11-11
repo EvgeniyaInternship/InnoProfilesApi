@@ -9,6 +9,7 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IAdminService
 {
     Task<AdminDto> GetAdminByIdAsync(Guid id, CancellationToken ct = default);
+    Task<AdminDto> GetAdminByAccountIdAsync(Guid accountId, CancellationToken ct = default);
     Task<PagedResultDto<AdminDto>> GetAdminsAsync(
         PaginationParamsDto paginationParams,
         AdminFilterDto? filter = null,

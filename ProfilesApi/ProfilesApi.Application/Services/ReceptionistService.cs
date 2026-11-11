@@ -34,6 +34,15 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         return receptionist.ToDto();
     }
 
+    public async Task<ReceptionistDto> GetReceptionistByAccountIdAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
+        if (receptionist is null)
+            throw new KeyNotFoundException($"Receptionist for account {accountId} was not found.");
+
+        return receptionist.ToDto();
+    }
+
     public async Task<PagedResultDto<ReceptionistDto>> GetReceptionistsAsync(
         PaginationParamsDto paginationParams,
         ReceptionistFilterDto? filter = null,

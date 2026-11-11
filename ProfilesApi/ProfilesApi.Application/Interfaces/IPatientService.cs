@@ -9,6 +9,7 @@ namespace ProfilesApi.Application.Interfaces;
 public interface IPatientService
 {
     Task<PatientDto> GetPatientByIdAsync(Guid id, CancellationToken ct = default);
+    Task<PatientDto> GetPatientByAccountIdAsync(Guid accountId, CancellationToken ct = default);
     Task<PagedResultDto<PatientDto>> GetPatientsAsync(
         PaginationParamsDto paginationParams,
         PatientFilterDto? filter = null,

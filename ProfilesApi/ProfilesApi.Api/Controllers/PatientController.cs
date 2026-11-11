@@ -31,6 +31,20 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return Ok(patient);
     }
 
+    [Authorize]
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentPatient(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+
+        var patient = await patientService.GetPatientByAccountIdAsync(accountId, cancellationToken);
+        return Ok(patient);
+    }
+
     [Authorize(Policy = Policies.Staff)]
     [HttpGet]
     [ProducesResponseType(typeof(List<PatientDto>), StatusCodes.Status200OK)]
@@ -51,7 +65,7 @@ public sealed class PatientController(IPatientService patientService) : Controll
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, patient);
     }
 
-    [Authorize(Policy = Policies.PatientAndAdmin)]
+    [Authorize]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -59,11 +73,14 @@ public sealed class PatientController(IPatientService patientService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdatePatient([FromBody] UpdatePatientDto dto, CancellationToken cancellationToken)
     {
-        string? subjectId = User.FindFirstValue("sub");
-        if (subjectId != dto.Id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+
+        var patient = await patientService.GetPatientByIdAsync(dto.Id, cancellationToken);
+        if (patient.AccountId != accountId && !User.IsInRole(AccountRole.Admin.ToString()))
             return Forbid();
 
-        await patientService.UpdatePatientAsync(dto, Guid.Parse(subjectId), cancellationToken);
+        await patientService.UpdatePatientAsync(dto, patient.AccountId, cancellationToken);
         return NoContent();
     }
 

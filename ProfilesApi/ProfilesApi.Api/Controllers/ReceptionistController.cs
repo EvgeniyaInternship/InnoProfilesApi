@@ -32,6 +32,20 @@ public sealed class ReceptionistController(IReceptionistService receptionistServ
         return Ok(receptionist);
     }
 
+    [Authorize]
+    [HttpGet("current")]
+    [ProducesResponseType(typeof(ReceptionistDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentReceptionist(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue("sub"), out var accountId))
+            return Unauthorized();
+
+        var receptionist = await receptionistService.GetReceptionistByAccountIdAsync(accountId, cancellationToken);
+        return Ok(receptionist);
+    }
+
     [HttpGet]
     [ProducesResponseType(typeof(List<ReceptionistDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

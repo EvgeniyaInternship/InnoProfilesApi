@@ -23,7 +23,7 @@ public static class AuthenticationExtensions
                 policy.WithOrigins("http://localhost:5173")
                     .AllowAnyHeader()
                     .AllowCredentials()
-                    .WithMethods("GET", "POST"));
+                    .WithMethods("GET", "POST", "PUT", "DELETE"));
         });
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

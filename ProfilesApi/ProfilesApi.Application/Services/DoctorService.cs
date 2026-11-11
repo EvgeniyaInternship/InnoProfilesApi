@@ -35,6 +35,15 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         return doctor.ToDto();
     }
 
+    public async Task<DoctorDto> GetDoctorByAccountIdAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var doctor = await unitOfWork.Doctors.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
+        if (doctor is null)
+            throw new KeyNotFoundException($"Doctor for account {accountId} was not found.");
+
+        return doctor.ToDto();
+    }
+
     public async Task<PagedResultDto<DoctorDto>> GetDoctorsAsync(
         PaginationParamsDto paginationParams,
         DoctorFilterDto? filter = null,
