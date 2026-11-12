@@ -16,7 +16,7 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class DoctorController(IDoctorService doctorService) : ControllerBase
 {
-    [Authorize(Policy = Policies.Staff)]
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -24,11 +24,6 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
     public async Task<IActionResult> GetDoctorById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var doctor = await doctorService.GetDoctorByIdAsync(id, cancellationToken);
-
-        string? subjectId = User.FindFirstValue("sub");
-        if (!User.IsInRole(AccountRole.Admin.ToString()) && doctor.AccountId.ToString() != subjectId)
-            return Forbid();
-
         return Ok(doctor);
     }
 
@@ -46,7 +41,7 @@ public sealed class DoctorController(IDoctorService doctorService) : ControllerB
         return Ok(doctor);
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(List<DoctorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
