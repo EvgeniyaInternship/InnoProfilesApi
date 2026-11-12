@@ -25,11 +25,11 @@ public sealed class AccountController(IAccountService accountService) : Controll
     public async Task<IActionResult> GetAccountById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var account = await accountService.GetAccountByIdAsync(id, cancellationToken);
-        if (account.Role == AccountRole.Doctor)
+        if (account.Role == AccountRole.Doctor || User.IsInRole(AccountRole.Admin.ToString()))
             return Ok(account);
 
         var isOwner = Guid.TryParse(User.FindFirstValue("sub"), out var subjectId) && subjectId == id;
-        if (!isOwner && !User.IsInRole(AccountRole.Admin.ToString()))
+        if (!isOwner)
             return Forbid();
 
         return Ok(account);
