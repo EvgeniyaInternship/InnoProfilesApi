@@ -16,18 +16,22 @@ namespace ProfilesApi.Api.Controllers;
 [Route("[controller]")]
 public sealed class AccountController(IAccountService accountService) : ControllerBase
 {
-    [Authorize]
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAccountById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        string? subjectId = User.FindFirstValue("sub");
-        if (subjectId != id.ToString() && !User.IsInRole(AccountRole.Admin.ToString()))
+        var account = await accountService.GetAccountByIdAsync(id, cancellationToken);
+        if (account.Role == AccountRole.Doctor)
+            return Ok(account);
+
+        var isOwner = Guid.TryParse(User.FindFirstValue("sub"), out var subjectId) && subjectId == id;
+        if (!isOwner && !User.IsInRole(AccountRole.Admin.ToString()))
             return Forbid();
 
-        var account = await accountService.GetAccountByIdAsync(id, cancellationToken);
         return Ok(account);
     }
 
