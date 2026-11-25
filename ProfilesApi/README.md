@@ -8,7 +8,7 @@ Target framework: **.NET 10** (`net10.0`). Nullable reference types and implicit
 
 ```
 ProfilesApi.slnx
-docker-compose.yml
+Dockerfile
 ProfilesApi.Api/              HTTP host
 ProfilesApi.Application/      use cases, DTOs, validation
 ProfilesApi.Domain/           entities and persistence contracts
@@ -163,13 +163,12 @@ Add a migration:
 dotnet ef migrations add <Name> --project ProfilesApi.Infrastructure --startup-project ProfilesApi.Api
 ```
 
-`docker-compose.yml` starts SonarQube and its own Postgres 15, not the Profiles schema:
-
-- Postgres: `localhost:5432`, user `sonar`, password `sonar`, database `sonar`
-- SonarQube: `http://localhost:9000`
+The shared stack (Postgres, Keycloak, SonarQube, Auth, and this API) is started from `InnoInfrastructure`:
 
 ```powershell
-docker compose up -d
+docker compose up -d --build
 ```
 
-Local Auth must be running for registration. Keycloak realm roles must match `AccountRole` names: `Admin`, `Receptionist`, `Doctor`, `Patient`.
+Run that in `InnoInfrastructure`, with this repository checked out next to it. The image is built from `Dockerfile` in this directory. Inside the container, `localhost:8080` is forwarded to the Keycloak service so the configured Keycloak URL stays `http://localhost:8080`.
+
+For `dotnet run` on the host, Auth must already be running. Keycloak realm roles must match `AccountRole` names: `Admin`, `Receptionist`, `Doctor`, `Patient`.

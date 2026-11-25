@@ -19,6 +19,8 @@ public sealed class RegistrationService(
     {
         var role = ResolveRole(dto);
         await EnsureAccountIsAvailableAsync(dto.Email, dto.PhoneNumber, cancellationToken);
+        if (dto is RegisterPatientDto patient)
+            await EnsureInsuranceNumberIsAvailableAsync(patient.InsuranceNumber, cancellationToken);
 
         var userId = await identityClient.RegisterAsync(dto.ToIdentityRequest(role), cancellationToken);
 
@@ -78,6 +80,16 @@ public sealed class RegistrationService(
 
         if (account is not null)
             throw new ConflictException($"Account with Email {email} or Phone Number {phoneNumber} already exists.");
+    }
+
+    private async Task EnsureInsuranceNumberIsAvailableAsync(string insuranceNumber, CancellationToken cancellationToken)
+    {
+        var patient = await unitOfWork.Patients.GetAsync(
+            x => x.InsuranceNumber == insuranceNumber,
+            cancellationToken: cancellationToken);
+
+        if (patient is not null)
+            throw new ConflictException($"Insurance number {insuranceNumber} is already registered.");
     }
 
     private async Task TryDeleteIdentityAsync(Guid userId)
