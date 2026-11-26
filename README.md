@@ -34,17 +34,12 @@ Before working on this project, make sure you have the following installed:
 
 4. **Run the API**
 
-   The solution is split into multiple projects. The executable entry point is `ProfilesApi.Api`, so run it directly by project:
+   The solution is split into multiple projects. The executable entry point is `ProfilesApi.Api`. Architecture, NuGet packages, configuration, and Docker are described in [ProfilesApi/README.md](ProfilesApi/README.md).
 
    ```bash
-   dotnet run --project ProfilesApi.Api
+   dotnet run --project ProfilesApi.Api --launch-profile http
    ```
 
 5. **Verify it's running**
 
-   By default, the API should be available at:
-
-   ```
-   https://localhost:5001
-   http://localhost:5000
-   ```
+   The `http` profile listens on `http://localhost:5082`. Swagger is at `http://localhost:5082/swagger`. The `https` profile also listens on `https://localhost:7073`.

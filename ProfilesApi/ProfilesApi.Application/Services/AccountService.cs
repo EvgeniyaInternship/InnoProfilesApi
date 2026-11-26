@@ -9,11 +9,12 @@ using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
+public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountService> logger) : IAccountService
 {
     private static Expression<Func<AccountEntity, bool>> BuildFilterExpression(AccountFilterDto? filter)
     {
@@ -40,8 +41,12 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
     {
         var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, cancellationToken: ct);
         if (account is null)
+        {
+            logger.LogWarning("Account with id {AccountId} does not exist.", id);
             throw new KeyNotFoundException($"Account with ID {id} was not found.");
+        }
 
+        logger.LogInformation("Loaded account {AccountId}.", account.Id);
         return account.ToDto();
     }
 
@@ -62,6 +67,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
         var dtos = accounts.Select(account => account.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} accounts.", dtos.Count);
         return new PagedResultDto<AccountDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -72,7 +78,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Email == dto.Email || x.PhoneNumber == dto.PhoneNumber, cancellationToken: ct);
             if (account is not null)
+            {
+                logger.LogWarning("Account with email {Email} or phone {PhoneNumber} already exists.", dto.Email, dto.PhoneNumber);
                 throw new ConflictException($"Account with Email {dto.Email} or Phone Number {dto.PhoneNumber} already exists.");
+            }
 
             account = dto.ToEntity();
 
@@ -80,10 +89,12 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created account {AccountId} with role {Role}.", account.Id, account.Role);
             return account.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating account.");
         }
@@ -93,7 +104,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
     {
         var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, true, cancellationToken: ct);
         if (account is null)
+        {
+            logger.LogWarning("Account with id {AccountId} does not exist.", dto.Id);
             throw new KeyNotFoundException($"Account with ID {dto.Id} was not found.");
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -107,9 +121,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             account.MiddleName = dto.MiddleName;
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated account {AccountId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating accounts.");
         }
@@ -122,14 +138,19 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, true, cancellationToken: ct);
             if (account is null)
+            {
+                logger.LogWarning("Account with id {AccountId} does not exist.", id);
                 throw new KeyNotFoundException($"Account with ID {id} was not found.");
+            }
 
             unitOfWork.Accounts.Remove(account);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed account {AccountId}.", account.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while removing accounts.");
         }
@@ -137,7 +158,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task<List<AccountDto>> CreateRangeAsync(List<CreateAccountDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} accounts.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -151,7 +176,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             );
 
             if (existingAccounts.Any())
+            {
+                logger.LogWarning("An account with one of the provided emails or phone numbers already exists.");
                 throw new InvalidOperationException("An account with one of the provided emails or phone numbers already exists.");
+            }
 
             var entities = dtos.Select(dto => dto.ToEntity());
 
@@ -159,10 +187,13 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(account => account.ToDto()).ToList();
+            var created = entities.Select(account => account.ToDto()).ToList();
+            logger.LogInformation("Created {Count} accounts.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating accounts.");
         }
@@ -170,7 +201,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task UpdateRangeAsync(List<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return;
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Updated {Count} accounts.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -181,16 +216,21 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
             if (existingAccounts.Count != uniqueDtos.Count())
+            {
+                logger.LogWarning("One or more accounts do not exist.");
                 throw new KeyNotFoundException("One or more accounts were not found.");
+            }
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
             unitOfWork.Accounts.UpdateRange(entities);
 
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} accounts.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating accounts.");
         }
@@ -199,7 +239,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} accounts.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -207,16 +251,22 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
             if (existingAccounts.Count != distinctIds.Count())
+            {
+                logger.LogWarning("One or more accounts do not exist.");
                 throw new KeyNotFoundException("One or more accounts were not found.");
+            }
 
             unitOfWork.Accounts.RemoveRange(existingAccounts);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} accounts.", existingAccounts.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while removing accounts.");
         }
     }
+
 }
