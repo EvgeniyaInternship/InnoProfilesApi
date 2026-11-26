@@ -30,7 +30,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
     {
         var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, cancellationToken: ct);
         if (receptionist is null)
+        {
+            logger.LogWarning("Receptionist with id {ReceptionistId} does not exist.", id);
             throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
+        }
 
         logger.LogInformation("Loaded receptionist {ReceptionistId}.", receptionist.Id);
         return receptionist.ToDto();
@@ -40,7 +43,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
     {
         var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
         if (receptionist is null)
+        {
+            logger.LogWarning("Receptionist for account {AccountId} does not exist.", accountId);
             throw new KeyNotFoundException($"Receptionist for account {accountId} was not found.");
+        }
 
         logger.LogInformation("Loaded receptionist {ReceptionistId} for account {AccountId}.", receptionist.Id, accountId);
         return receptionist.ToDto();
@@ -74,14 +80,23 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
             if (account is null)
+            {
+                logger.LogWarning("Account with id {AccountId} does not exist.", dto.AccountId);
                 throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
+            }
 
             var existingAccountReceptionist = await unitOfWork.Receptionists.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
             if (existingAccountReceptionist is not null)
+            {
+                logger.LogWarning("Receptionist for account {AccountId} already exists.", dto.AccountId);
                 throw new InvalidOperationException($"Receptionist with AccountId {dto.AccountId} already exists.");
+            }
 
             if (account.Role != AccountRole.Receptionist)
+            {
+                logger.LogWarning("Account {AccountId} is not a receptionist.", dto.AccountId);
                 throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a receptionist.");
+            }
 
             var receptionist = dto.ToEntity();
 
@@ -94,6 +109,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating receptionist failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating receptionist.");
         }
@@ -106,10 +122,16 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         {
             var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
             if (receptionist is null)
+            {
+                logger.LogWarning("Receptionist with id {ReceptionistId} does not exist.", dto.Id);
                 throw new KeyNotFoundException($"Receptionist with ID {dto.Id} was not found.");
+            }
 
             if (receptionist.AccountId != accountId)
+            {
+                logger.LogWarning("Account {AccountId} does not own receptionist {ReceptionistId}.", accountId, dto.Id);
                 throw new InvalidOperationException("You are not the owner of this receptionist record.");
+            }
 
             unitOfWork.Receptionists.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
@@ -118,6 +140,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating receptionist failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating receptionist.");
         }
@@ -130,7 +153,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         {
             var receptionist = await unitOfWork.Receptionists.GetAsync(x => x.Id == id, true, cancellationToken: ct);
             if (receptionist is null)
+            {
+                logger.LogWarning("Receptionist with id {ReceptionistId} does not exist.", id);
                 throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
+            }
 
             unitOfWork.Receptionists.Remove(receptionist);
             await unitOfWork.SaveChangesAsync(ct);
@@ -139,6 +165,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing receptionist failed.");
             await transaction.RollbackAsync(ct);
             throw new ServerException("An error occurred while removing receptionists.");
         }
@@ -163,6 +190,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
             if (existingReceptionists.Any())
             {
                 var existingIds = existingReceptionists.Select(a => a.AccountId);
+                logger.LogWarning("Receptionists for accounts {AccountIds} already exist.", existingIds);
                 throw new InvalidOperationException($"Receptionists with AccountIds already exist: {string.Join(", ", existingIds)}");
             }
 
@@ -178,6 +206,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating receptionists failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating receptionists.");
         }
@@ -200,7 +229,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
             if (existingReceptionists.Count != uniqueDtos.Count())
+            {
+                logger.LogWarning("One or more receptionists do not exist.");
                 throw new KeyNotFoundException("One or more receptionists were not found.");
+            }
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
 
@@ -211,6 +243,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating receptionists failed.");
             await transaction.RollbackAsync(ct);
             throw new ServerException("An error occurred while updating receptionists.");
         }
@@ -231,7 +264,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
             var existingReceptionists = await unitOfWork.Receptionists.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
             if (existingReceptionists.Count != distinctIds.Count())
+            {
+                logger.LogWarning("One or more receptionists do not exist.");
                 throw new KeyNotFoundException("One or more receptionists were not found.");
+            }
 
             unitOfWork.Receptionists.RemoveRange(existingReceptionists);
             await unitOfWork.SaveChangesAsync(ct);
@@ -240,8 +276,10 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<Receptio
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing receptionists failed.");
             await transaction.RollbackAsync(ct);
             throw new ServerException("An error occurred while removing receptionists.");
         }
     }
+
 }

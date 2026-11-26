@@ -40,6 +40,7 @@ public sealed class RegistrationService(
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Registration failed for account {AccountId}.", userId);
             await transaction.RollbackAsync(cancellationToken);
             await TryDeleteIdentityAsync(userId);
             throw new ServerException("An error occurred while registering the user.", ex);
@@ -69,6 +70,7 @@ public sealed class RegistrationService(
                 unitOfWork.Receptionists.Add(receptionist);
                 break;
             default:
+                logger.LogWarning("Unsupported registration role.");
                 throw new ArgumentException("Unsupported registration role.");
         }
     }
@@ -80,7 +82,10 @@ public sealed class RegistrationService(
             cancellationToken: cancellationToken);
 
         if (account is not null)
+        {
+            logger.LogWarning("Account with email {Email} or phone {PhoneNumber} already exists.", email, phoneNumber);
             throw new ConflictException($"Account with Email {email} or Phone Number {phoneNumber} already exists.");
+        }
     }
 
     private async Task EnsureInsuranceNumberIsAvailableAsync(string insuranceNumber, CancellationToken cancellationToken)
@@ -90,7 +95,10 @@ public sealed class RegistrationService(
             cancellationToken: cancellationToken);
 
         if (patient is not null)
+        {
+            logger.LogWarning("Insurance number {InsuranceNumber} is already registered.", insuranceNumber);
             throw new ConflictException($"Insurance number {insuranceNumber} is already registered.");
+        }
     }
 
     private async Task TryDeleteIdentityAsync(Guid userId)
@@ -105,7 +113,13 @@ public sealed class RegistrationService(
         }
     }
 
-    private static AccountRole ResolveRole(RegisterUserDto dto)
+    private AccountRole LogUnsupportedRole()
+    {
+        logger.LogWarning("Unsupported registration role.");
+        throw new ArgumentException("Unsupported registration role.");
+    }
+
+    private AccountRole ResolveRole(RegisterUserDto dto)
     {
         return dto switch
         {
@@ -113,7 +127,7 @@ public sealed class RegistrationService(
             RegisterDoctorDto => AccountRole.Doctor,
             RegisterAdminDto => AccountRole.Admin,
             RegisterReceptionistDto => AccountRole.Receptionist,
-            _ => throw new ArgumentException("Unsupported registration role.")
+            _ => LogUnsupportedRole()
         };
     }
 }

@@ -31,7 +31,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
     {
         var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == id, cancellationToken: ct);
         if (doctor is null)
+        {
+            logger.LogWarning("Doctor with id {DoctorId} does not exist.", id);
             throw new KeyNotFoundException($"Doctor with ID {id} was not found.");
+        }
 
         logger.LogInformation("Loaded doctor {DoctorId}.", doctor.Id);
         return doctor.ToDto();
@@ -41,7 +44,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
     {
         var doctor = await unitOfWork.Doctors.GetAsync(x => x.AccountId == accountId, cancellationToken: ct);
         if (doctor is null)
+        {
+            logger.LogWarning("Doctor for account {AccountId} does not exist.", accountId);
             throw new KeyNotFoundException($"Doctor for account {accountId} was not found.");
+        }
 
         logger.LogInformation("Loaded doctor {DoctorId} for account {AccountId}.", doctor.Id, accountId);
         return doctor.ToDto();
@@ -75,14 +81,23 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.AccountId, cancellationToken: ct);
             if (account is null)
+            {
+                logger.LogWarning("Account with id {AccountId} does not exist.", dto.AccountId);
                 throw new KeyNotFoundException($"Account with ID {dto.AccountId} was not found.");
+            }
 
             var existingAccountDoctor = await unitOfWork.Doctors.GetAsync(x => x.AccountId == dto.AccountId, cancellationToken: ct);
             if (existingAccountDoctor is not null)
+            {
+                logger.LogWarning("Doctor for account {AccountId} already exists.", dto.AccountId);
                 throw new InvalidOperationException($"Doctor with AccountId {dto.AccountId} already exists.");
+            }
 
             if (account.Role != AccountRole.Doctor)
+            {
+                logger.LogWarning("Account {AccountId} is not a doctor.", dto.AccountId);
                 throw new InvalidOperationException($"Account with ID {dto.AccountId} is not a doctor.");
+            }
 
             var doctor = dto.ToEntity();
 
@@ -95,6 +110,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating doctor failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating doctor.");
         }
@@ -107,10 +123,16 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         {
             var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == dto.Id, cancellationToken: ct);
             if (doctor is null)
+            {
+                logger.LogWarning("Doctor with id {DoctorId} does not exist.", dto.Id);
                 throw new KeyNotFoundException($"Doctor with ID {dto.Id} was not found.");
+            }
 
             if (doctor.AccountId != accountId)
+            {
+                logger.LogWarning("Account {AccountId} does not own doctor {DoctorId}.", accountId, dto.Id);
                 throw new InvalidOperationException("You are not the owner of this doctor record.");
+            }
 
             unitOfWork.Doctors.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
@@ -119,6 +141,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating doctor failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating doctor.");
         }
@@ -131,7 +154,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         {
             var doctor = await unitOfWork.Doctors.GetAsync(x => x.Id == id, true, cancellationToken: ct);
             if (doctor is null)
+            {
+                logger.LogWarning("Doctor with id {DoctorId} does not exist.", id);
                 throw new KeyNotFoundException($"Doctor with ID {id} was not found.");
+            }
 
 
             unitOfWork.Doctors.Remove(doctor);
@@ -141,6 +167,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing doctor failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while removing doctor.");
         }
@@ -165,6 +192,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
             if (existingDoctors.Any())
             {
                 var existingIds = existingDoctors.Select(a => a.AccountId);
+                logger.LogWarning("Doctors for accounts {AccountIds} already exist.", existingIds);
                 throw new InvalidOperationException($"Doctors with AccountIds already exist: {string.Join(", ", existingIds)}");
             }
 
@@ -180,6 +208,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating doctors failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating doctors.");
         }
@@ -202,7 +231,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
             var existingDoctors = await unitOfWork.Doctors.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
             if (existingDoctors.Count != uniqueDtos.Count())
+            {
+                logger.LogWarning("One or more doctors do not exist.");
                 throw new KeyNotFoundException("One or more doctors were not found.");
+            }
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
 
@@ -213,6 +245,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating doctors failed.");
             await transaction.RollbackAsync(ct);
             throw new ServerException("An error occurred while updating doctors.");
         }
@@ -233,7 +266,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
             var existingDoctors = await unitOfWork.Doctors.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
             if (existingDoctors.Count != distinctIds.Count())
+            {
+                logger.LogWarning("One or more doctors do not exist.");
                 throw new KeyNotFoundException("One or more doctors were not found.");
+            }
 
             unitOfWork.Doctors.RemoveRange(existingDoctors);
             await unitOfWork.SaveChangesAsync(ct);
@@ -242,8 +278,10 @@ public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService>
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing doctors failed.");
             await transaction.RollbackAsync(ct);
             throw new ServerException("An error occurred while removing doctors.");
         }
     }
+
 }

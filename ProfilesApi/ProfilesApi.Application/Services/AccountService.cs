@@ -41,7 +41,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
     {
         var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, cancellationToken: ct);
         if (account is null)
+        {
+            logger.LogWarning("Account with id {AccountId} does not exist.", id);
             throw new KeyNotFoundException($"Account with ID {id} was not found.");
+        }
 
         logger.LogInformation("Loaded account {AccountId}.", account.Id);
         return account.ToDto();
@@ -75,7 +78,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Email == dto.Email || x.PhoneNumber == dto.PhoneNumber, cancellationToken: ct);
             if (account is not null)
+            {
+                logger.LogWarning("Account with email {Email} or phone {PhoneNumber} already exists.", dto.Email, dto.PhoneNumber);
                 throw new ConflictException($"Account with Email {dto.Email} or Phone Number {dto.PhoneNumber} already exists.");
+            }
 
             account = dto.ToEntity();
 
@@ -88,6 +94,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating account.");
         }
@@ -97,7 +104,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
     {
         var account = await unitOfWork.Accounts.GetAsync(x => x.Id == dto.Id, true, cancellationToken: ct);
         if (account is null)
+        {
+            logger.LogWarning("Account with id {AccountId} does not exist.", dto.Id);
             throw new KeyNotFoundException($"Account with ID {dto.Id} was not found.");
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -115,6 +125,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating accounts.");
         }
@@ -127,7 +138,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         {
             var account = await unitOfWork.Accounts.GetAsync(x => x.Id == id, true, cancellationToken: ct);
             if (account is null)
+            {
+                logger.LogWarning("Account with id {AccountId} does not exist.", id);
                 throw new KeyNotFoundException($"Account with ID {id} was not found.");
+            }
 
             unitOfWork.Accounts.Remove(account);
             await unitOfWork.SaveChangesAsync(ct);
@@ -136,6 +150,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing account failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while removing accounts.");
         }
@@ -161,7 +176,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
             );
 
             if (existingAccounts.Any())
+            {
+                logger.LogWarning("An account with one of the provided emails or phone numbers already exists.");
                 throw new InvalidOperationException("An account with one of the provided emails or phone numbers already exists.");
+            }
 
             var entities = dtos.Select(dto => dto.ToEntity());
 
@@ -175,6 +193,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Creating accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while creating accounts.");
         }
@@ -197,7 +216,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => ids.Contains(x.Id), cancellationToken: ct);
 
             if (existingAccounts.Count != uniqueDtos.Count())
+            {
+                logger.LogWarning("One or more accounts do not exist.");
                 throw new KeyNotFoundException("One or more accounts were not found.");
+            }
 
             var entities = uniqueDtos.Select(d => d.UpdateEntity());
             unitOfWork.Accounts.UpdateRange(entities);
@@ -208,6 +230,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Updating accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while updating accounts.");
         }
@@ -228,7 +251,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
             var existingAccounts = await unitOfWork.Accounts.GetAllAsync(x => distinctIds.Contains(x.Id), cancellationToken: ct);
 
             if (existingAccounts.Count != distinctIds.Count())
+            {
+                logger.LogWarning("One or more accounts do not exist.");
                 throw new KeyNotFoundException("One or more accounts were not found.");
+            }
 
             unitOfWork.Accounts.RemoveRange(existingAccounts);
             await unitOfWork.SaveChangesAsync(ct);
@@ -237,8 +263,10 @@ public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountServic
         }
         catch (Exception ex) when (ex is not AppException)
         {
+            logger.LogError(ex, "Removing accounts failed.");
             await transaction.RollbackAsync(cancellationToken: ct);
             throw new ServerException("An error occurred while removing accounts.");
         }
     }
+
 }
