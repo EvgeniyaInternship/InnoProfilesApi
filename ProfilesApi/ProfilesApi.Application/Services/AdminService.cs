@@ -10,11 +10,12 @@ using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
+public sealed class AdminService(IUnitOfWork unitOfWork, ILogger<AdminService> logger) : IAdminService
 {
     private static Expression<Func<AdminEntity, bool>> BuildFilterExpression(AdminFilterDto? filter)
     {
@@ -31,6 +32,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         if (admin is null)
             throw new KeyNotFoundException($"Admin with ID {id} was not found.");
 
+        logger.LogInformation("Loaded admin {AdminId}.", admin.Id);
         return admin.ToDto();
     }
 
@@ -40,6 +42,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
         if (admin is null)
             throw new KeyNotFoundException($"Admin for account {accountId} was not found.");
 
+        logger.LogInformation("Loaded admin {AdminId} for account {AccountId}.", admin.Id, accountId);
         return admin.ToDto();
     }
 
@@ -60,6 +63,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
         var dtos = admins.Select(admin => admin.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} admins.", dtos.Count);
         return new PagedResultDto<AdminDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -85,6 +89,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created admin {AdminId} for account {AccountId}.", admin.Id, admin.AccountId);
             return admin.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
@@ -109,6 +114,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             unitOfWork.Admins.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated admin {AdminId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -129,6 +135,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             unitOfWork.Admins.Remove(admin);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed admin {AdminId}.", admin.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -139,7 +146,11 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
     public async Task<List<AdminDto>> CreateRangeAsync(List<CreateAdminDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} admins.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -159,7 +170,9 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(admin => admin.ToDto()).ToList();
+            var created = entities.Select(admin => admin.ToDto()).ToList();
+            logger.LogInformation("Created {Count} admins.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -171,7 +184,11 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
     public async Task UpdateRangeAsync(List<UpdateAdminDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        if (uniqueDtos.Count() == 0) return;
+        if (!uniqueDtos.Any())
+        {
+            logger.LogInformation("Updated {Count} admins.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -188,6 +205,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             unitOfWork.Admins.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} admins.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -199,7 +217,11 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} admins.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -212,6 +234,7 @@ public sealed class AdminService(IUnitOfWork unitOfWork) : IAdminService
             unitOfWork.Admins.RemoveRange(existingAdmins);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} admins.", existingAdmins.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {

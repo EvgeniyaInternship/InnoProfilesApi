@@ -10,11 +10,12 @@ using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
+public sealed class PatientService(IUnitOfWork unitOfWork, ILogger<PatientService> logger) : IPatientService
 {
     private static Expression<Func<PatientEntity, bool>> BuildFilterExpression(PatientFilterDto? filter)
     {
@@ -33,6 +34,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         if (patient is null)
             throw new KeyNotFoundException($"Patient with ID {id} was not found.");
 
+        logger.LogInformation("Loaded patient {PatientId}.", patient.Id);
         return patient.ToDto();
     }
 
@@ -42,6 +44,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
         if (patient is null)
             throw new KeyNotFoundException($"Patient for account {accountId} was not found.");
 
+        logger.LogInformation("Loaded patient {PatientId} for account {AccountId}.", patient.Id, accountId);
         return patient.ToDto();
     }
 
@@ -62,6 +65,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
         var dtos = patients.Select(patient => patient.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} patients.", dtos.Count);
         return new PagedResultDto<PatientDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -87,6 +91,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created patient {PatientId} for account {AccountId}.", patient.Id, patient.AccountId);
             return patient.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
@@ -111,6 +116,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             patient.InsuranceNumber = dto.InsuranceNumber;
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated patient {PatientId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -130,6 +136,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             unitOfWork.Patients.Remove(patient);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed patient {PatientId}.", patient.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -140,7 +147,11 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
 
     public async Task<List<PatientDto>> CreateRangeAsync(List<CreatePatientDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} patients.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -162,7 +173,9 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(patient => patient.ToDto()).ToList();
+            var created = entities.Select(patient => patient.ToDto()).ToList();
+            logger.LogInformation("Created {Count} patients.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -174,7 +187,11 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
     public async Task UpdateRangeAsync(List<UpdatePatientDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        if (uniqueDtos.Count() == 0) return;
+        if (!uniqueDtos.Any())
+        {
+            logger.LogInformation("Updated {Count} patients.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -191,6 +208,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             unitOfWork.Patients.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} patients.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -202,7 +220,11 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} patients.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -215,6 +237,7 @@ public sealed class PatientService(IUnitOfWork unitOfWork) : IPatientService
             unitOfWork.Patients.RemoveRange(existingPatients);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} patients.", existingPatients.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {

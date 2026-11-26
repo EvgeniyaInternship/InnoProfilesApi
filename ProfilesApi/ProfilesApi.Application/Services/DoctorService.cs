@@ -10,11 +10,12 @@ using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
+public sealed class DoctorService(IUnitOfWork unitOfWork, ILogger<DoctorService> logger) : IDoctorService
 {
     private static Expression<Func<DoctorEntity, bool>> BuildFilterExpression(DoctorFilterDto? filter)
     {
@@ -32,6 +33,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         if (doctor is null)
             throw new KeyNotFoundException($"Doctor with ID {id} was not found.");
 
+        logger.LogInformation("Loaded doctor {DoctorId}.", doctor.Id);
         return doctor.ToDto();
     }
 
@@ -41,6 +43,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
         if (doctor is null)
             throw new KeyNotFoundException($"Doctor for account {accountId} was not found.");
 
+        logger.LogInformation("Loaded doctor {DoctorId} for account {AccountId}.", doctor.Id, accountId);
         return doctor.ToDto();
     }
 
@@ -61,6 +64,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
         var dtos = doctors.Select(doctor => doctor.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} doctors.", dtos.Count);
         return new PagedResultDto<DoctorDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -86,6 +90,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created doctor {DoctorId} for account {AccountId}.", doctor.Id, doctor.AccountId);
             return doctor.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
@@ -110,6 +115,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             unitOfWork.Doctors.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated doctor {DoctorId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -131,6 +137,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             unitOfWork.Doctors.Remove(doctor);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed doctor {DoctorId}.", doctor.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -141,7 +148,11 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
 
     public async Task<List<DoctorDto>> CreateRangeAsync(List<CreateDoctorDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} doctors.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -163,7 +174,9 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(doctor => doctor.ToDto()).ToList();
+            var created = entities.Select(doctor => doctor.ToDto()).ToList();
+            logger.LogInformation("Created {Count} doctors.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -175,7 +188,11 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
     public async Task UpdateRangeAsync(List<UpdateDoctorDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        if (uniqueDtos.Count() == 0) return;
+        if (!uniqueDtos.Any())
+        {
+            logger.LogInformation("Updated {Count} doctors.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -192,6 +209,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             unitOfWork.Doctors.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} doctors.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -203,7 +221,11 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} doctors.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -216,6 +238,7 @@ public sealed class DoctorService(IUnitOfWork unitOfWork) : IDoctorService
             unitOfWork.Doctors.RemoveRange(existingDoctors);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} doctors.", existingDoctors.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {

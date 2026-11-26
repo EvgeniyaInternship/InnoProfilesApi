@@ -58,7 +58,7 @@ Use cases and the types controllers exchange with clients. References Domain onl
 
 `DependencyInjection.AddApplicationServices` registers validators from this assembly, SharpGrip automatic MVC validation, and the scoped services.
 
-Registration (`RegisterUserDto`) is one polymorphic body discriminated by `role`. `RegistrationService` sends email, password, first name, last name, and role to Auth, then saves the account and the role row in one transaction. If the database save fails, it asks Auth to delete the identity user.
+Registration (`RegisterUserDto`) is one polymorphic body discriminated by `role`. Patient registration is anonymous. Any other role requires an authenticated Admin. `RegistrationService` checks that the email, phone, and, for a patient, the insurance number are free, then sends email, password, first name, last name, and role to Auth. It saves the account and the role row in one transaction. If the database save fails, it asks Auth to delete the identity user. A duplicate email, phone, or insurance number is a `ConflictException` (HTTP 400).
 
 ### ProfilesApi.Infrastructure
 
@@ -92,6 +92,8 @@ Authentication is JWT Bearer against the Keycloak realm. The access token is rea
 
 Swagger UI is enabled in Development at `/swagger`. HTTPS redirection runs outside Development.
 
+Serilog writes to the console and to MongoDB through the `MongoDBBson` sink. The database is `logs` and the collection is `profiles`. Startup is Information. Each call writes a Serilog request line with method, path, status, and elapsed time, plus one HTTP log with headers, query, duration, and the request and response bodies. Authorization and cookie headers are redacted. Each public service method logs its outcome. `GlobalExceptionHandler` writes warnings and errors to the same collection. Compose sets `Serilog__WriteTo__0__Args__databaseUrl` from `x-mongo-logs-url`, using `MONGO_USER`, `MONGO_PASSWORD`, and `MONGO_DB`.
+
 `GlobalExceptionHandler` maps argument and format errors and `ConflictException` to 400, `IdentityProviderException` to 502, `UnauthorizedAccessException` to 401, `KeyNotFoundException` to 404, and anything else to 500. 500 responses hide the exception message.
 
 ## NuGet packages
@@ -115,6 +117,8 @@ Versions are the ones declared in the project files.
 | Api | Microsoft.AspNetCore.OpenApi | 10.0.12 |
 | Api | Microsoft.EntityFrameworkCore.Design | 10.0.12 |
 | Api | Microsoft.EntityFrameworkCore.Relational | 10.0.14 |
+| Api | Serilog.AspNetCore | 11.0.0 |
+| Api | Serilog.Sinks.MongoDB | 8.0.0 |
 | Api | Swashbuckle.AspNetCore | 10.2.3 |
 
 Domain references EF Core because `IUnitOfWork.BeginTransactionAsync` returns `IDbContextTransaction`.
@@ -127,15 +131,17 @@ Domain references EF Core because `IUnitOfWork.BeginTransactionAsync` returns `I
 | --- | --- |
 | `AuthApi:BaseUrl` | Auth API base URL. Default `http://localhost:5119` |
 | `Keycloak:BaseUrl` | Keycloak base URL. Default `http://localhost:8080` |
-| `Keycloak:Realm` | Realm used as the JWT authority. Default `myrealm` |
+| `Keycloak:Realm` | Realm used as the JWT authority. `appsettings.json` defaults to `myrealm`. Compose uses `KEYCLOAK_REALM` (`inno-realm` in `.env.example`) |
 | `Keycloak:Audience` | Expected token audience / authorized party. Default `dotnet-auth-service` |
 | `Keycloak:RequireHttpsMetadata` | JWT metadata HTTPS requirement. Default `false` for local HTTP |
 
 `ConnectionStrings:ProfilesDb` is required at startup and is not in `appsettings.json`. Set it with user secrets on the API project (the process loads that project's secrets):
 
 ```powershell
-dotnet user-secrets set "ConnectionStrings:ProfilesDb" "Host=localhost;Port=5432;Database=profiles;Username=postgres;Password=postgres" --project ProfilesApi.Api
+dotnet user-secrets set "ConnectionStrings:ProfilesDb" "Host=localhost;Port=5433;Database=profiles;Username=postgres;Password=postgres" --project ProfilesApi.Api
 ```
+
+Port `5433` is the Compose host port for `profiles-db`. Port `5432` is SonarQube. The database name and password are `PROFILES_DB`, `PROFILES_DB_USER`, and `PROFILES_DB_PASSWORD` in `InnoInfrastructure/.env`.
 
 The API user-secrets id is `0f88a1bd-db5c-4c47-a64a-013e641a660b`.
 
@@ -163,7 +169,7 @@ Add a migration:
 dotnet ef migrations add <Name> --project ProfilesApi.Infrastructure --startup-project ProfilesApi.Api
 ```
 
-The shared stack (Postgres, Keycloak, SonarQube, Auth, and this API) is started from `InnoInfrastructure`:
+The shared stack (Postgres, Keycloak, MongoDB, SonarQube, Auth, Facility, the UI, and this API) is started from `InnoInfrastructure`:
 
 ```powershell
 docker compose up -d --build

@@ -34,6 +34,7 @@ public sealed class RegistrationService(
             AddProfile(profile);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            logger.LogInformation("Registration committed for account {AccountId} with role {Role}.", account.Id, role);
 
             return profile.ToRegisteredDto(account);
         }

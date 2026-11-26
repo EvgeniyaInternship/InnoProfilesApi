@@ -9,11 +9,12 @@ using ProfilesApi.Application.Mappings;
 using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
+public sealed class AccountService(IUnitOfWork unitOfWork, ILogger<AccountService> logger) : IAccountService
 {
     private static Expression<Func<AccountEntity, bool>> BuildFilterExpression(AccountFilterDto? filter)
     {
@@ -42,6 +43,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
         if (account is null)
             throw new KeyNotFoundException($"Account with ID {id} was not found.");
 
+        logger.LogInformation("Loaded account {AccountId}.", account.Id);
         return account.ToDto();
     }
 
@@ -62,6 +64,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
         var dtos = accounts.Select(account => account.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} accounts.", dtos.Count);
         return new PagedResultDto<AccountDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -80,6 +83,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created account {AccountId} with role {Role}.", account.Id, account.Role);
             return account.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
@@ -107,6 +111,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             account.MiddleName = dto.MiddleName;
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated account {AccountId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -127,6 +132,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             unitOfWork.Accounts.Remove(account);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed account {AccountId}.", account.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -137,7 +143,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task<List<AccountDto>> CreateRangeAsync(List<CreateAccountDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} accounts.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -159,7 +169,9 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(account => account.ToDto()).ToList();
+            var created = entities.Select(account => account.ToDto()).ToList();
+            logger.LogInformation("Created {Count} accounts.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -170,7 +182,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
     public async Task UpdateRangeAsync(List<UpdateAccountDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return;
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Updated {Count} accounts.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -188,6 +204,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
 
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} accounts.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -199,7 +216,11 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} accounts.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -212,6 +233,7 @@ public sealed class AccountService(IUnitOfWork unitOfWork) : IAccountService
             unitOfWork.Accounts.RemoveRange(existingAccounts);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} accounts.", existingAccounts.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {

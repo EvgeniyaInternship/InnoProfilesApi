@@ -10,11 +10,12 @@ using ProfilesApi.Domain.Entities;
 using ProfilesApi.Domain.Enum;
 using ProfilesApi.Domain.Exceptions;
 using ProfilesApi.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ProfilesApi.Application.Services;
 
-public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistService
+public sealed class ReceptionistService(IUnitOfWork unitOfWork, ILogger<ReceptionistService> logger) : IReceptionistService
 {
     private static Expression<Func<ReceptionistEntity, bool>> BuildFilterExpression(ReceptionistFilterDto? filter)
     {
@@ -31,6 +32,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         if (receptionist is null)
             throw new KeyNotFoundException($"Receptionist with ID {id} was not found.");
 
+        logger.LogInformation("Loaded receptionist {ReceptionistId}.", receptionist.Id);
         return receptionist.ToDto();
     }
 
@@ -40,6 +42,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
         if (receptionist is null)
             throw new KeyNotFoundException($"Receptionist for account {accountId} was not found.");
 
+        logger.LogInformation("Loaded receptionist {ReceptionistId} for account {AccountId}.", receptionist.Id, accountId);
         return receptionist.ToDto();
     }
 
@@ -60,6 +63,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
         var dtos = receptionists.Select(receptionist => receptionist.ToDto()).ToList();
 
+        logger.LogInformation("Loaded {Count} receptionists.", dtos.Count);
         return new PagedResultDto<ReceptionistDto>(dtos, totalCount, totalPages, paginationParams.PageNumber, paginationParams.PageSize);
     }
 
@@ -85,6 +89,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
+            logger.LogInformation("Created receptionist {ReceptionistId} for account {AccountId}.", receptionist.Id, receptionist.AccountId);
             return receptionist.ToDto();
         }
         catch (Exception ex) when (ex is not AppException)
@@ -109,6 +114,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             unitOfWork.Receptionists.Update(dto.UpdateEntity());
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated receptionist {ReceptionistId}.", dto.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -129,6 +135,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             unitOfWork.Receptionists.Remove(receptionist);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed receptionist {ReceptionistId}.", receptionist.Id);
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -139,7 +146,11 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
 
     public async Task<List<ReceptionistDto>> CreateRangeAsync(List<CreateReceptionistDto> dtos, CancellationToken ct = default)
     {
-        if (!dtos.Any()) return [];
+        if (!dtos.Any())
+        {
+            logger.LogInformation("Created {Count} receptionists.", 0);
+            return [];
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -161,7 +172,9 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 
-            return entities.Select(receptionist => receptionist.ToDto()).ToList();
+            var created = entities.Select(receptionist => receptionist.ToDto()).ToList();
+            logger.LogInformation("Created {Count} receptionists.", created.Count);
+            return created;
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -173,7 +186,11 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
     public async Task UpdateRangeAsync(List<UpdateReceptionistDto> dtos, CancellationToken ct = default)
     {
         var uniqueDtos = dtos.DistinctBy(d => d.Id);
-        if (uniqueDtos.Count() == 0) return;
+        if (!uniqueDtos.Any())
+        {
+            logger.LogInformation("Updated {Count} receptionists.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -190,6 +207,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             unitOfWork.Receptionists.UpdateRange(entities);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Updated {Count} receptionists.", uniqueDtos.Count());
         }
         catch (Exception ex) when (ex is not AppException)
         {
@@ -201,7 +219,11 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
     public async Task RemoveRangeAsync(List<Guid> ids, CancellationToken ct = default)
     {
         var distinctIds = ids.Distinct();
-        if (distinctIds.Count() == 0) return;
+        if (!distinctIds.Any())
+        {
+            logger.LogInformation("Removed {Count} receptionists.", 0);
+            return;
+        }
 
         using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken: ct);
         try
@@ -214,6 +236,7 @@ public sealed class ReceptionistService(IUnitOfWork unitOfWork) : IReceptionistS
             unitOfWork.Receptionists.RemoveRange(existingReceptionists);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
+            logger.LogInformation("Removed {Count} receptionists.", existingReceptionists.Count);
         }
         catch (Exception ex) when (ex is not AppException)
         {
